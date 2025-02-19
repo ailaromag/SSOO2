@@ -7,7 +7,8 @@
 int main(int argc, char **argv){
     int descriptor;    
     if(argc!=3){
-        perror("Error");
+        perror(RED "Error: main(), argc != 3");
+        printf(RESET);
         return -1;
     }
     char *camino = argv[1];
