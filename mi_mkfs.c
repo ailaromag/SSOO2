@@ -9,7 +9,7 @@ int main(int argc, char **argv){
     if(argc!=3){
         perror(RED "Error: main(), argc != 3");
         printf(RESET);
-        return -1;
+        return FALLO;
     }
     char *camino = argv[1];
     int nbloques = atoi(argv[2]);
