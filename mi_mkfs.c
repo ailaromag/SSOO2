@@ -1,5 +1,5 @@
 
-#include "bloques.h"
+#include "ficheros_basico.h"
 #include <string.h>
 
 // argc- indica el número de elementos escritos por consola
@@ -23,5 +23,15 @@ int main(int argc, char **argv){
             bwrite(i,buf);
          }
     }
+
+    //Inicializar el superbloque:
+    initSB(nbloques,nbloques/4);
+
+    //Inicializar el mapa de bits:
+    initMB();
+
+    //Inicializar el array de inodos:
+    initAI(); 
+
     bumount();
 }
