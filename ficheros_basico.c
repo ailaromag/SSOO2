@@ -45,7 +45,7 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
     SB.totInodos = ninodos;
 
     // escribirlo en el fichero
-    if (bwrite(nbloques, &SB) == -1) {
+    if (bwrite(posSB, &SB) == -1) {
         perror(RED "Error: initSB(), bwrite() == -1");
         printf(RESET);
         return EXIT_FAILURE;
@@ -67,6 +67,8 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
          printf(RESET);
          return FALLO;
      }
+     printf("Bytes leidos: %i\n", bytesLeidos);
+     printf("cantidad bloques libres: %i\n", SB.cantBloquesLibres);
  
      int tamMetadatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
  
@@ -87,8 +89,8 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
      // Hay que restar los bloques que ocupan los metadatos
      // de los bloques libres:
      SB.cantBloquesLibres -= tamMetadatos;
-     printf("tamaño Metadatos : %i\n", tamMetadatos);
-     printf(" Cantidad Bloques libres : %i\n", SB.cantBloquesLibres);
+     printf("tamaño metadatos : %i\n", tamMetadatos);
+     printf("cantidad bloques libres : %i\n", SB.cantBloquesLibres);
  
      // Escribir el mapa de bits en el dispositivo
      if (bwrite(SB.posPrimerBloqueMB, bufMB) == -1)
