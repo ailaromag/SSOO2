@@ -6,7 +6,7 @@ static int descriptor = 0;
 int bmount(const char *camino) {
     if ((descriptor = open(camino, O_RDWR | O_CREAT, 0666)) == FALLO)  // Abrimos el fichero y controlamos que no se produzcan errores
     {
-        perror(RED "Error: bmount(), open() == FALLO");
+        perror(RED "Error: bloques.c -> bmount() -> open() == FALLO");
         printf(RESET);
         return FALLO;
     }
@@ -18,7 +18,7 @@ int bmount(const char *camino) {
 // Hace un close del archivo
 int bumount() {
     if (close(descriptor) == FALLO) {
-        perror(RED "Error: bumount, close() == FALLO");
+        perror(RED "Error: bloques.c -> bumount -> close() == FALLO");
         printf(RESET);
         return FALLO;
     }
@@ -30,13 +30,13 @@ int bwrite(unsigned int nbloque, const void *buf) {
     int bytesEscritos;
     // Nos posicionamos: (descriptor apuntará a la posición deseada)
     if ((lseek(descriptor, nbloque * BLOCKSIZE, SEEK_SET)) == FALLO) {
-        perror(RED "Error: bwrite(), lseek() == FALLO");
+        perror(RED "Error: bloques.c -> bwrite() -> lseek() == FALLO");
         printf(RESET);
         return FALLO;
     }
 
     if ((bytesEscritos = write(descriptor, buf, BLOCKSIZE)) == FALLO) {
-        perror(RED "Error: write() == FALLO");
+        perror(RED "Error: bloques.c -> bwrite() -> write() == FALLO");
         printf(RESET);
         return FALLO;
     }
@@ -47,13 +47,13 @@ int bwrite(unsigned int nbloque, const void *buf) {
 int bread(unsigned int nbloque, void *buf) {
     int bytesLeidos;
     if ((lseek(descriptor, nbloque * BLOCKSIZE, SEEK_SET)) == FALLO) {
-        perror(RED "Error: bread, lseek() == FALLO");
+        perror(RED "Error: bloques.c -> bread() -> lseek() == FALLO");
         printf(RESET);
         return FALLO;
     }
 
     if ((bytesLeidos = read(descriptor, buf, BLOCKSIZE)) == FALLO) {
-        perror(RED "Error: bread, read() == FALLO");
+        perror(RED "Error: bloques.c -> bread -> read() == FALLO");
         printf(RESET);
         return FALLO;
     }

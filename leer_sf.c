@@ -5,14 +5,14 @@ int mostrar_sf(char *nombre_dispositivo) {
 
     // Montar el dispositivo
     if (bmount(nombre_dispositivo) == FALLO) {
-        perror(RED "Error: leer_sf.c, mostrar_sf(), bmount() == FALLO\n");
+        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bmount() == FALLO\n");
         printf(RESET);
         return FALLO;
     }
 
     // Leer el superbloque
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: leer_sf.c, mostrar_sf(), bread() == FALLO\n");
+        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bread() == FALLO\n");
         printf(RESET);
         bumount();
         return FALLO;
@@ -52,7 +52,7 @@ int mostrar_sf(char *nombre_dispositivo) {
         int posInodo = (siguiente * INODOSIZE) % BLOCKSIZE;
         // Read the block containing the inode
         if (bread(nbloque, inodos) == -1) {
-            perror(RED "Error: leer_sf.c, mostrar_sf(), while(), bread() == FALLO\n");
+            perror(RED "Error: leer_sf.c -> mostrar_sf() -> while() -> bread() == FALLO\n");
             printf(RESET);
             break;
         }
@@ -78,20 +78,21 @@ int mostrar_sf(char *nombre_dispositivo) {
     printf("\nTest hecho sobre la secuencialidad de la lista AI ha pasado: %s\n", esSecuencial ? "Sí" : "No");
     // Desmontar el dispositivo
     if (bumount() == -1) {
-        perror(RED "Error: leer_sf.c, mostrar_sf(), bumount() == FALLO\n");
+        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bumount() == FALLO\n");
         printf(RESET);
     }
+    return EXITO;
 }
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        perror(RED "Error: leer_sf.c, main(), argc != 2\n");
+        perror(RED "Error: leer_sf.c -> main() -> argc != 2\n");
         printf(RESET);
         return FALLO;
     }
 
     if (mostrar_sf(argv[1]) == FALLO) {
-        perror(RED "Error: leer_sf.c, main(), mostrar_sf() == FALLO\n");
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
         printf(RESET);
         return FALLO;
     }

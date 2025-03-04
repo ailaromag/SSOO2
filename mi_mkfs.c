@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
     // Obtención de las variables
     if (argc != 3) {
-        perror(RED "Error: main(), argc != 3");
+        perror(RED "Error: mi_mkfs.c -> main() -> argc != 3");
         printf(RESET);
         return FALLO;
     }
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     int descriptor;
     unsigned char buf[BLOCKSIZE];
     if ((descriptor = bmount(camino)) == FALLO) {
-        perror(RED "Error: main(), bmount() == FALLO");
+        perror(RED "Error: mi_mkfs.c -> main() -> bmount() == FALLO");
         printf(RESET);
         return FALLO;
     }
@@ -29,25 +29,25 @@ int main(int argc, char **argv) {
     }
     // Inicializar el superbloque:
     if (initSB(nbloques, nbloques / 4) == FALLO) {
-        perror(RED "Error: main(), initSB() == FALLO");
+        perror(RED "Error: mi_mkfs.c -> main() -> initSB() == FALLO");
         printf(RESET);
         return FALLO;
     }
     // Inicializar el mapa de bits:
     if (initMB() == FALLO){
-        perror(RED "Error: main(), initMB() == FALLO");
+        perror(RED "Error: mi_mkfs.c -> main() -> initMB() == FALLO");
         printf(RESET);
         return FALLO;
     }
     // Inicializar el array de inodos:
     if (initAI() == FALLO) {
-        perror(RED "Error: main(), initAI() == FALLO");
+        perror(RED "Error: mi_mkfs.c -> main() -> initAI() == FALLO");
         printf(RESET);
         return FALLO;
     }
     // Desmontar dispositivo
     if (bumount() == FALLO) {
-        perror(RED "Error: main(), bumount() == FALLO");
+        perror(RED "Error: mi_mkfs.c -> main() -> bumount() == FALLO");
         printf(RESET);
         return FALLO;
     }
