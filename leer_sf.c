@@ -36,20 +36,25 @@ void mostrar_sf(char *nombre_dispositivo) {
 
     // Mostrar lista enlazada de inodos libres
     printf("RECORRIDO LISTA ENLAZADA DE INODOS LIBRES\n");
-    int siguiente = SB.posInodoRaiz + SB.posPrimerBloqueAI;
+    struct inodo inodos[BLOCKSIZE / INODOSIZE];  // Only need one block at a time
+    
+    // Read blocks one at a time
+    int siguiente = SB.posPrimerInodoLibre;
     struct inodo inodo;
     int count = 0;
     
-    while (siguiente != -1 && count < SB.totInodos) {
-        if (count > 0 && count % 28 == 0) {
-            printf("…\n… ");
-        }
-        printf("%d ", siguiente);
-        if (bread(siguiente, &inodo) == -1) {
-            fprintf(stderr, "Error en leer_inodo\n");
+    while ((siguiente != UINT_MAX) && (count < SB.totInodos)) {
+        int nbloque = SB.posPrimerBloqueAI + (siguiente * INODOSIZE) / BLOCKSIZE;
+        int posInodo = (siguiente * INODOSIZE) % BLOCKSIZE;
+        // Read the block containing the inode
+        if (bread(nbloque, inodos) == -1) {
+            fprintf(stderr, "Error reading inode block\n");
             break;
         }
+        
+        inodo = inodos[posInodo / INODOSIZE];
         siguiente = inodo.punterosDirectos[0];
+        printf("%d\n", siguiente);
         count++;
     }
 

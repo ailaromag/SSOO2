@@ -18,7 +18,7 @@ int bmount(const char *camino){
 
 // Hace un close del archivo
 int bumount(){
-    if(close(descriptor)==-1){
+    if(close(descriptor) == -1){
         perror(RED "Error: bumount, close() == -1");
         printf(RESET);
         return FALLO;
