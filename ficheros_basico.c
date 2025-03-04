@@ -159,19 +159,21 @@ int escribir_bit(unsigned int nbloque, unsigned int bit) {
     unsigned char bufferMB[BLOCKSIZE];
     posbyte = posbyte % BLOCKSIZE;
     // Leemos el bloque físico que contiene el bit:
-    if (bread(nbloqueabs, &bufferMB[posbyte]) == FALLO) {
+    if (bread(nbloqueabs, &bufferMB) == FALLO) {
         perror(RED "Error: escribir_bit(), bread() == FALLO");
         printf(RESET);
         return FALLO;
     }
     // Escribimos el bit en el buffer
-    unsigned char mascara = 128;
+    unsigned char mascara = 0b10000000;
     mascara >>= posbit;
-    if (bit == 0) {
+    if (bit == 1) {
         bufferMB[posbyte] |= mascara;
     } else if (bit == 1) {
-        bufferMB[posbyte] &= mascara;
+        bufferMB[posbyte] &= ~mascara;
     } else {
+        perror(RED "Error: escribir_bit(), bit != 0 ni 1");
+        printf(RESET);
         return FALLO;
     }
 
