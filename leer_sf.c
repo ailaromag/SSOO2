@@ -1,16 +1,19 @@
 #include "ficheros_basico.h"
 
-void mostrar_sf(char *nombre_dispositivo) {
+void mostrar_sf(char *nombre_dispositivo)
+{
     struct superbloque SB;
-    
+
     // Montar el dispositivo
-    if (bmount(nombre_dispositivo) == -1) {
+    if (bmount(nombre_dispositivo) == -1)
+    {
         fprintf(stderr, "Error en bmount\n");
         return;
     }
 
     // Leer el superbloque
-    if (bread(posSB, &SB) == -1) {
+    if (bread(posSB, &SB) == -1)
+    {
         fprintf(stderr, "Error en bread\n");
         bumount();
         return;
@@ -34,6 +37,7 @@ void mostrar_sf(char *nombre_dispositivo) {
     printf("sizeof struct superbloque: %lu\n", sizeof(struct superbloque));
     printf("sizeof struct inodo: %lu\n\n", sizeof(struct inodo));
 
+    
     // Mostrar lista enlazada de inodos libres
     printf("RECORRIDO LISTA ENLAZADA DE INODOS LIBRES\n");
     struct inodo inodos[BLOCKSIZE / INODOSIZE];  // Only need one block at a time
@@ -59,13 +63,16 @@ void mostrar_sf(char *nombre_dispositivo) {
     }
 
     // Desmontar el dispositivo
-    if (bumount() == -1) {
+    if (bumount() == -1)
+    {
         fprintf(stderr, "Error en bumount\n");
     }
 }
 
-int main(int argc, char **argv) {
-    if (argc != 2) {
+int main(int argc, char **argv)
+{
+    if (argc != 2)
+    {
         fprintf(stderr, "Sintaxis: %s <dispositivo>\n", argv[0]);
         return -1;
     }
