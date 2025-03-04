@@ -205,13 +205,13 @@ char leer_bit(unsigned int nbloque) {
     unsigned char bufferMB[BLOCKSIZE];
     posbyte = posbyte % BLOCKSIZE;
     // Leemos el bloque físico:
-    if (bread(nbloqueabs, &bufferMB[posbyte]) == FALLO) {
+    if (bread(nbloqueabs, &bufferMB) == FALLO) {
         perror(RED "Error: escribir_bit(), bread() == FALLO");
         printf(RESET);
         return FALLO;
     }
     // Leemos el bit
-    unsigned char mascara = 128;
+    unsigned char mascara = 0b10000000;
     mascara >>= posbit;
     mascara &= bufferMB[posbyte];
     mascara >>= (7 - posbit);
@@ -226,58 +226,64 @@ char leer_bit(unsigned int nbloque) {
  */
 int reservar_bloque() {
     struct superbloque SB;
-
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: escribir_bit(), bread() == FALLO");
         printf(RESET);
         return FALLO;
     }
-    int nbloqueMB = 0;
+    if (SB.cantBloquesLibres <= 0) {
+        perror(RED "Error: escribir_bit(), SB.cantBloquesLibres <= 0");
+        printf(RESET);
+        return FALLO;
+    }
+    int nbloqueMB = SB.posPrimerBloqueMB;
     unsigned char bufferMB[BLOCKSIZE];
     unsigned char bufferAux[BLOCKSIZE];
     memset(bufferAux, 255, BLOCKSIZE);
-
-    if (SB.cantBloquesLibres > 0) {
-        int bloqueLibre = 0;
-        // Localizamos el 1er bloque libre:
-        while (!bloqueLibre && nbloqueMB < SB.totBloques) {
-            if (bread(nbloqueMB + SB.posPrimerBloqueMB, bufferMB) == FALLO) {
-                perror(RED "Error: escribir_bit(), bread() == FALLO");
-                printf(RESET);
-                return FALLO;
-            }
-            if (memcmp(bufferMB, bufferAux, BLOCKSIZE) != 0) {
-                bloqueLibre = 1;
-            }
-        }
-        int byteAcero = 0;
-        int posbyte = 0;
-        // Localizamos el 1er byte con algún 0
-        while (!byteAcero && byteAcero < BLOCKSIZE) {
-            if (bufferMB[SB.posPrimerBloqueMB + posbyte] != 255) {
-                byteAcero = 1;
-            }
-            posbyte++;
-        }
-        // Localizamos el bit que vale 0 dentro del byte
-        unsigned char mascara = 128;
-        int posbit = 0;
-        while (bufferMB[posbyte] & mascara) {
-            bufferMB[posbyte] <<= 1;
-            posbit++;
-        }
-        // Finalmente calculamos el bloque físico que podemos reservar:
-        int nbloque = (nbloqueMB * BLOCKSIZE * 8) + (posbyte * 8) + posbit;
-
-        if (escribir_bit(nbloque, 1) == FALLO) {
+    bool bloqueLibreEncontrado = false;
+    // Localizamos el 1er bloque libre:
+    while (!bloqueLibreEncontrado && nbloqueMB <= SB.posUltimoBloqueMB) {
+        if (bread(nbloqueMB, bufferMB) == FALLO) {
+            perror(RED "Error: escribir_bit(), bread() == FALLO");
+            printf(RESET);
             return FALLO;
         }
-        SB.cantBloquesLibres--;
-        unsigned char bufferCeros[BLOCKSIZE];
-        memset(bufferCeros, 0, BLOCKSIZE);
-        bwrite(nbloque, bufferCeros);
-        return nbloque;
+        if (memcmp(bufferMB, bufferAux, BLOCKSIZE) != 0) {
+            bloqueLibreEncontrado = true;
+        } else {
+            nbloqueMB++;
+        }
     }
+    bool byteACeroEncontrado = false;
+    int posbyte = 0;
+    // Localizamos el 1er byte con algún 0
+    while (!byteACeroEncontrado && posbyte < BLOCKSIZE) {
+        if (bufferMB[SB.posPrimerBloqueMB + posbyte] != 255) {
+            byteACeroEncontrado = true;
+        } else {
+            posbyte++;
+        }
+    }
+    // Localizamos el bit que vale 0 dentro del byte
+    unsigned char mascara = 0b10000000;
+    int posbit = 0;
+    while (bufferMB[posbyte] & mascara) {
+        bufferMB[posbyte] <<= 1;
+        posbit++;
+    }
+    // Finalmente calculamos el bloque físico que podemos reservar:
+    int nbloque = (nbloqueMB * BLOCKSIZE * BYTE_SIZE) + (posbyte * BYTE_SIZE) + posbit;
+
+    if (escribir_bit(nbloque, 1) == FALLO) {
+        return FALLO;
+    }
+    SB.cantBloquesLibres--;
+    // revervamos la zona a
+    unsigned char bufferCeros[BLOCKSIZE];
+    memset(bufferCeros, 0, BLOCKSIZE);
+    bwrite(nbloque, bufferCeros);
+
+    return nbloque;
 }
 
 /**
