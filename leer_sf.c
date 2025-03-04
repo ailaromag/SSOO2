@@ -1,23 +1,13 @@
 #include "ficheros_basico.h"
 
-int mostrar_sf(char *nombre_dispositivo) {
+int mostrar_sf() {
     struct superbloque SB;
-
-    // Montar el dispositivo
-    if (bmount(nombre_dispositivo) == FALLO) {
-        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bmount() == FALLO\n");
-        printf(RESET);
-        return FALLO;
-    }
-
     // Leer el superbloque
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: leer_sf.c -> mostrar_sf() -> bread() == FALLO\n");
         printf(RESET);
-        bumount();
         return FALLO;
     }
-
     // Mostrar información del superbloque
     printf("DATOS DEL SUPERBLOQUE\n");
     printf("posPrimerBloqueMB = %d\n", SB.posPrimerBloqueMB);
@@ -33,13 +23,20 @@ int mostrar_sf(char *nombre_dispositivo) {
     printf("totBloques = %d\n", SB.totBloques);
     printf("totInodos = %d\n\n", SB.totInodos);
 
-    printf("sizeof struct superbloque: %lu\n", sizeof(struct superbloque));
-    printf("sizeof struct inodo: %lu\n\n", sizeof(struct inodo));
+    return EXITO;
+}
 
+int test_secuencialidad_AI() {
+    struct superbloque SB;
+    // Leer el superbloque
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
     // Mostrar lista enlazada de inodos libres
     printf("RECORRIDO LISTA ENLAZADA DE INODOS LIBRES\n");
     struct inodo inodos[BLOCKSIZE / INODOSIZE];  // Only need one block at a time
-
     // Read blocks one at a time
     int actual;
     int siguiente = SB.posPrimerInodoLibre;
@@ -56,7 +53,6 @@ int mostrar_sf(char *nombre_dispositivo) {
             printf(RESET);
             break;
         }
-
         inodo = inodos[posInodo / INODOSIZE];
         actual = siguiente;
         siguiente = inodo.punterosDirectos[0];
@@ -75,12 +71,75 @@ int mostrar_sf(char *nombre_dispositivo) {
         }
         count++;
     }
-    printf("\nTest hecho sobre la secuencialidad de la lista AI ha pasado: %s\n", esSecuencial ? "Sí" : "No");
-    // Desmontar el dispositivo
-    if (bumount() == -1) {
-        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bumount() == FALLO\n");
+    printf("\nTest hecho sobre la secuencialidad de la lista AI ha pasado: %s\n\n", esSecuencial ? "Sí" : "No");
+    return EXITO;
+}
+int reservar_liberar_bloque() {
+    printf("RESERVAMOS UN BLOQUE Y LUEGO LO LIBERAMOS\n");
+    int nBloqueReservado = reservar_bloque();
+    if (nBloqueReservado == FALLO) {
+        perror(RED "Error: leer_sf.c -> reservar_liberar_bloque() -> reservar_bloque() == FALLO\n");
         printf(RESET);
+        return FALLO;
     }
+    printf("Se ha reservado el bloque físico nº %d que era el 1º libre indicado por el MB\n", nBloqueReservado);
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> reservar_liberar_bloque() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    printf("SB.cantBloquesLibres: %d\n", SB.cantBloquesLibres);
+    if (liberar_bloque(nBloqueReservado) == FALLO) {
+        perror(RED "Error: leer_sf.c -> reservar_liberar_bloque() -> liberar_bloque() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> reservar_liberar_bloque() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    printf("Liberamos ese bloque y después SB.cantBloquesLibres = %d\n\n", SB.cantBloquesLibres);
+    return EXITO;
+}
+int mostrar_directorio_raiz() {
+    // Reservamos el primer inodo (directorio raiz)
+    int posInodoReservado = reservar_inodo('d', 7);
+    if (posInodoReservado == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> reservar_inodo() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Leer el superbloque
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Leer el inodo del directorio raiz
+    struct inodo inodo;
+    struct inodo inodos[BLOCKSIZE / INODOSIZE];
+    int nbloque = SB.posPrimerBloqueAI + (SB.posInodoRaiz * INODOSIZE) / BLOCKSIZE;
+    int posInodo = (SB.posInodoRaiz * INODOSIZE) % BLOCKSIZE;
+    if (leer_inodo(nbloque, inodos) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> leer_inodo() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    inodo = inodos[posInodo / INODOSIZE];
+    // Leer el contenido del directorio raiz
+    printf("DATOS DEL DIRECTORIO RAIZ\n");
+    printf("tipo: %c\n", inodo.tipo);
+    printf("permisos: %d\n", inodo.permisos);
+    printf("atime: %ld\n", inodo.atime);
+    printf("mtime: %ld\n", inodo.mtime);
+    printf("ctime: %ld\n", inodo.ctime);
+    printf("btime: %ld\n", inodo.btime);
+    printf("nlinks: %d\n", inodo.nlinks);
+    printf("tamEnBytesLog: %d\n", inodo.tamEnBytesLog);
+    printf("numBloquesOcupados: %d\n\n", inodo.numBloquesOcupados);
     return EXITO;
 }
 
@@ -90,11 +149,40 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
-
-    if (mostrar_sf(argv[1]) == FALLO) {
+    // Montar el dispositivo
+    if (bmount(argv[1]) == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> bmount() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Mostrar los atributos básicos
+    if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
         printf(RESET);
         return FALLO;
+    }
+    // Recorrer el AI y comprobar la secuencialidad
+    if (test_secuencialidad_AI() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> test_secuencialidad_AI() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Reservar y liberar un bloque
+    if (reservar_liberar_bloque() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> reservar_liberar_bloque() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Mostrar datos del directorio raiz
+    if (mostrar_directorio_raiz() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_directorio_raiz() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Desmontar el dispositivo
+    if (bumount() == -1) {
+        perror(RED "Error: leer_sf.c -> main() -> bumount() == FALLO\n");
+        printf(RESET);
     }
     return EXITO;
 }

@@ -45,6 +45,12 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
+    // Reservar el inodo del directorio raíz
+    if (reservar_inodo('d', 7) == FALLO) {
+        perror(RED "Error: mi_mkfs.c -> main() -> reservar_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
     // Desmontar dispositivo
     if (bumount() == FALLO) {
         perror(RED "Error: mi_mkfs.c -> main() -> bumount() == FALLO");

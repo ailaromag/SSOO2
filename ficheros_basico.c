@@ -145,7 +145,6 @@ int initAI() {
  */
 int escribir_bit(unsigned int nbloque, unsigned int bit) {
     struct superbloque SB;
-
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
         printf(RESET);
@@ -169,7 +168,7 @@ int escribir_bit(unsigned int nbloque, unsigned int bit) {
     mascara >>= posbit;
     if (bit == 1) {
         bufferMB[posbyte] |= mascara;
-    } else if (bit == 1) {
+    } else if (bit == 0) {
         bufferMB[posbyte] &= ~mascara;
     } else {
         perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bit != 0 ni 1");
@@ -277,12 +276,20 @@ int reservar_bloque() {
     if (escribir_bit(nbloque, 1) == FALLO) {
         return FALLO;
     }
-    SB.cantBloquesLibres--;
     // revervamos la zona a
     unsigned char bufferCeros[BLOCKSIZE];
     memset(bufferCeros, 0, BLOCKSIZE);
-    bwrite(nbloque, bufferCeros);
-
+    if (bwrite(nbloque, bufferCeros) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    SB.cantBloquesLibres--;
+    if (bwrite(posSB, &SB) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
     return nbloque;
 }
 
@@ -292,14 +299,21 @@ int reservar_bloque() {
 int liberar_bloque(unsigned int nbloque) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
+        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> bread() == FALLO");
         printf(RESET);
         return FALLO;
     }
     if (escribir_bit(nbloque, 0) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> escribir_bit() == FALLO");
+        printf(RESET);
         return FALLO;
     }
     SB.cantBloquesLibres++;
+    if (bwrite(posSB, &SB) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> bwrite() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
     return nbloque;
 }
 /**
@@ -389,14 +403,17 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos){
         return FALLO;
     }
     SB.posPrimerInodoLibre = inodoLibre.punterosDirectos[0];    // Apuntamos al siguiente inodo libre
+    SB.cantInodosLibres--;
     if (bwrite(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> bwrite() == FALLO");
         printf(RESET);
         return FALLO;
     }
+    // Escribimos el inodo
     if (escribir_inodo(posInodoReservado, &inodoReservado) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> escribir_inodo() == FALLO");
+        printf(RESET);
         return FALLO;
     }
-    SB.cantInodosLibres--;
     return posInodoReservado;
 }
