@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
         return FALLO;
     }
     // Inicializar el mapa de bits:
-    if (initMB() == FALLO){
+    if (initMB() == FALLO) {
         perror(RED "Error: mi_mkfs.c -> main() -> initMB() == FALLO");
         printf(RESET);
         return FALLO;

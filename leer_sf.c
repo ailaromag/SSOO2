@@ -1,5 +1,12 @@
 #include "ficheros_basico.h"
 
+int mostrar_sf();
+int test_secuencialidad_AI();
+int reservar_liberar_bloque();
+int mostrar_bitmap_bordes_seccion();
+int imprimir_info_leer_bit(int pos, int posPrimerBloqueMB);
+int mostrar_directorio_raiz();
+
 int mostrar_sf() {
     struct superbloque SB;
     // Leer el superbloque
@@ -103,6 +110,44 @@ int reservar_liberar_bloque() {
     printf("Liberamos ese bloque y después SB.cantBloquesLibres = %d\n\n", SB.cantBloquesLibres);
     return EXITO;
 }
+int mostrar_bitmap_bordes_seccion() {
+    struct superbloque SB;
+    // Leer el superbloque
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_bitmap_bordes_seccion() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Mostrar el valor del bitmap de los bordes de las secciones
+    printf("MAPA DE BITS CON BLOQUES DE METADATOS OCUPADOS\n");
+    imprimir_info_leer_bit(posSB, SB.posPrimerBloqueMB);
+    printf("posSB: %d -> leer_bit(%d) = %d\n", posSB, posSB, leer_bit(posSB));
+    imprimir_info_leer_bit(SB.posPrimerBloqueMB, SB.posPrimerBloqueMB);
+    printf("posPrimerBloqueMB: %d -> leer_bit(%d) = %d\n", SB.posPrimerBloqueMB, SB.posPrimerBloqueMB, leer_bit(SB.posPrimerBloqueMB));
+    imprimir_info_leer_bit(SB.posUltimoBloqueMB, SB.posPrimerBloqueMB);
+    printf("posUltimoBloqueMB: %d -> leer_bit(%d) = %d\n", SB.posUltimoBloqueMB, SB.posUltimoBloqueMB, leer_bit(SB.posUltimoBloqueMB));
+    imprimir_info_leer_bit(SB.posPrimerBloqueAI, SB.posPrimerBloqueMB);
+    printf("posPrimerBloqueAI: %d -> leer_bit(%d) = %d\n", SB.posPrimerBloqueAI, SB.posPrimerBloqueAI, leer_bit(SB.posPrimerBloqueAI));
+    imprimir_info_leer_bit(SB.posUltimoBloqueAI, SB.posPrimerBloqueMB);
+    printf("posUltimoBloqueAI: %d -> leer_bit(%d) = %d\n", SB.posUltimoBloqueAI, SB.posUltimoBloqueAI, leer_bit(SB.posUltimoBloqueAI));
+    imprimir_info_leer_bit(SB.posPrimerBloqueDatos, SB.posPrimerBloqueMB);
+    printf("posPrimerBloqueDatos: %d -> leer_bit(%d) = %d\n", SB.posPrimerBloqueDatos, SB.posPrimerBloqueDatos, leer_bit(SB.posPrimerBloqueDatos));
+    imprimir_info_leer_bit(SB.posUltimoBloqueDatos, SB.posPrimerBloqueMB);
+    printf("posUltimoBloqueDatos: %d -> leer_bit(%d) = %d\n", SB.posUltimoBloqueDatos, SB.posUltimoBloqueDatos, leer_bit(SB.posUltimoBloqueDatos));
+    printf("\n");
+    return EXITO;
+}
+int imprimir_info_leer_bit(int pos, int posPrimerBloqueMB) {
+    printf(GRAY "leer_bit(%d) -> postbyte: %d, posbyte (ajustado): %d, posbit: %d, nbloquesMB: %d, nbloqueabs: %d\n",
+           pos,
+           pos / BYTE_SIZE,
+           (pos / BYTE_SIZE) % BLOCKSIZE,
+           pos % BYTE_SIZE,
+           (pos / BYTE_SIZE) / BLOCKSIZE,
+           ((pos / BYTE_SIZE) / BLOCKSIZE) + posPrimerBloqueMB);
+    printf(RESET);
+    return EXITO;
+}
 int mostrar_directorio_raiz() {
     // Reservamos el primer inodo (directorio raiz)
     int posInodoReservado = reservar_inodo('d', 7);
@@ -126,13 +171,26 @@ int mostrar_directorio_raiz() {
         return FALLO;
     }
     // Leer el contenido del directorio raiz
+    struct tm *ts;
+    char atime[80];
+    char mtime[80];
+    char ctime[80];
+    char btime[80];
     printf("DATOS DEL DIRECTORIO RAIZ\n");
     printf("tipo: %c\n", inodo.tipo);
     printf("permisos: %d\n", inodo.permisos);
-    printf("atime: %ld\n", inodo.atime);
-    printf("mtime: %ld\n", inodo.mtime);
-    printf("ctime: %ld\n", inodo.ctime);
-    printf("btime: %ld\n", inodo.btime);
+    ts = localtime(&inodo.atime);
+    strftime(atime, sizeof(atime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("atime: %s\n", atime);
+    ts = localtime(&inodo.mtime);
+    strftime(mtime, sizeof(mtime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("mtime: %s\n", mtime);
+    ts = localtime(&inodo.ctime);
+    strftime(ctime, sizeof(ctime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("ctime: %s\n", ctime);
+    ts = localtime(&inodo.btime);
+    strftime(btime, sizeof(btime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("btime: %s\n", btime);
     printf("nlinks: %d\n", inodo.nlinks);
     printf("tamEnBytesLog: %d\n", inodo.tamEnBytesLog);
     printf("numBloquesOcupados: %d\n\n", inodo.numBloquesOcupados);
@@ -166,6 +224,12 @@ int main(int argc, char **argv) {
     // Reservar y liberar un bloque
     if (reservar_liberar_bloque() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> reservar_liberar_bloque() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Mostrar el valor bitmap de los bordes de las secciones
+    if (mostrar_bitmap_bordes_seccion() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_bitmap_bordes_seccion() == FALLO\n");
         printf(RESET);
         return FALLO;
     }

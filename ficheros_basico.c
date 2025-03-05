@@ -319,7 +319,7 @@ int liberar_bloque(unsigned int nbloque) {
 /**
  * Escribimos el inodo en la posición correspondiente del array de inodos.
  */
-int escribir_inodo(unsigned int ninodo, struct inodo *inodo){
+int escribir_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> escribir_inodo() -> bread() == FALLO");
@@ -345,7 +345,7 @@ int escribir_inodo(unsigned int ninodo, struct inodo *inodo){
 /**
  * Leemos el inodo en la posición correspondiente del array de inodos.
  */
-int leer_inodo(unsigned int ninodo, struct inodo *inodo){
+int leer_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> leer_inodo() -> bread() == FALLO");
@@ -363,7 +363,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo){
     *inodo = inodos[posInodo / INODOSIZE];
     return EXITO;
 }
-int reservar_inodo(unsigned char tipo, unsigned char permisos){
+int reservar_inodo(unsigned char tipo, unsigned char permisos) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> bread() == FALLO");
@@ -402,7 +402,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos){
         printf(RESET);
         return FALLO;
     }
-    SB.posPrimerInodoLibre = inodoLibre.punterosDirectos[0];    // Apuntamos al siguiente inodo libre
+    SB.posPrimerInodoLibre = inodoLibre.punterosDirectos[0];  // Apuntamos al siguiente inodo libre
     SB.cantInodosLibres--;
     if (bwrite(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> bwrite() == FALLO");
