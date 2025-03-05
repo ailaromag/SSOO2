@@ -120,15 +120,11 @@ int mostrar_directorio_raiz() {
     }
     // Leer el inodo del directorio raiz
     struct inodo inodo;
-    struct inodo inodos[BLOCKSIZE / INODOSIZE];
-    int nbloque = SB.posPrimerBloqueAI + (SB.posInodoRaiz * INODOSIZE) / BLOCKSIZE;
-    int posInodo = (SB.posInodoRaiz * INODOSIZE) % BLOCKSIZE;
-    if (leer_inodo(nbloque, inodos) == FALLO) {
+    if (leer_inodo(SB.posInodoRaiz, &inodo) == FALLO) {
         perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> leer_inodo() == FALLO\n");
         printf(RESET);
         return FALLO;
     }
-    inodo = inodos[posInodo / INODOSIZE];
     // Leer el contenido del directorio raiz
     printf("DATOS DEL DIRECTORIO RAIZ\n");
     printf("tipo: %c\n", inodo.tipo);
