@@ -423,17 +423,56 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos) {
  * Obtenemos la dirección almacenada en el puntero correspondiente del inodo,ptr
  */
 int obtener_nRangoBL(struct inodo *inodo, unsigned int nblogico, unsigned int *ptr){
-    return 0;
+    if(nblogico<DIRECTOS){  // <12
+        *ptr=inodo->punterosDirectos[nblogico];
+        return 0;
+    }else if(nblogico<INDIRECTOS0){ // <268
+        *ptr=inodo->punterosIndirectos[0];
+        return 1;
+    }else if(nblogico<INDIRECTOS1){
+        *ptr=inodo->punterosIndirectos[1];  // <65.804
+        return 2;
+    }else if(nblogico<INDIRECTOS2){
+        *ptr=inodo->punterosIndirectos[2];  // <16.843.020
+        return 3;
+    }else{
+        *ptr=0;
+        perror(RED "Error: ficheros_basico.c -> obtener_rangoBL() == BLOQUE LÓGICO FUERA DE RANGO");
+        printf(RESET);
+        return FALLO;
+    }
 }
 
 /**
  * Función que generaliza la obtención de los índices de los bloques de punteros
  */
 int obtener_indice(unsigned int nblogico, int nivel_punteros){
-    return 0;
+    if(nblogico<DIRECTOS){
+        return nblogico;
+    }else if(nblogico<INDIRECTOS0){
+        return nblogico - DIRECTOS;
+    }else if(nblogico<INDIRECTOS1){
+        if (nivel_punteros==2){
+            return(nblogico - INDIRECTOS0)/NPUNTEROS;
+        }else if( nivel_punteros==1){
+            return(nblogico - INDIRECTOS0)%NPUNTEROS;
+        }
+    }else if(nblogico<INDIRECTOS2){
+        switch(nivel_punteros){
+            case 3:
+            return (nblogico - INDIRECTOS1)/(NPUNTEROS*NPUNTEROS);
+            case 2:
+            return ((nblogico-INDIRECTOS1)%(NPUNTEROS))/NPUNTEROS;
+            case 1:
+            return ((nblogico-INDIRECTOS1)%(NPUNTEROS*NPUNTEROS))%NPUNTEROS;
+        }   
+    }
 }
 
-
+/**
+ * Función que obtiene el nº de bloque físico correspondiente a un bloque lógico indicado.
+ */
 int traducir_bloque_inodo(unsigned int inodo, unsigned int nblogico, unsigned char reservar){
+       
     return 0;
 }
