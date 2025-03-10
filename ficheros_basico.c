@@ -417,3 +417,23 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos) {
     }
     return posInodoReservado;
 }
+
+/**
+ * Función que devuelve  el rango de punteros en que se situa el bloque lógico.
+ * Obtenemos la dirección almacenada en el puntero correspondiente del inodo,ptr
+ */
+int obtener_nRangoBL(struct inodo *inodo, unsigned int nblogico, unsigned int *ptr){
+    return 0;
+}
+
+/**
+ * Función que generaliza la obtención de los índices de los bloques de punteros
+ */
+int obtener_indice(unsigned int nblogico, int nivel_punteros){
+    return 0;
+}
+
+
+int traducir_bloque_inodo(unsigned int inodo, unsigned int nblogico, unsigned char reservar){
+    return 0;
+}
