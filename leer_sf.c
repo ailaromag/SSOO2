@@ -1,5 +1,7 @@
 #include "ficheros_basico.h"
 
+// #define DEBUGN3
+
 int mostrar_sf();
 int test_secuencialidad_AI();
 int reservar_liberar_bloque();
@@ -209,6 +211,7 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
+    #ifdef DEBUGN3
     // Mostrar los atributos básicos
     if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
@@ -239,6 +242,9 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
+    #endif
+
+    
     // Desmontar el dispositivo
     if (bumount() == -1) {
         perror(RED "Error: leer_sf.c -> main() -> bumount() == FALLO\n");
