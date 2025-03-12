@@ -271,12 +271,12 @@ int reservar_bloque() {
         posbit++;
     }
     // Finalmente calculamos el bloque físico que podemos reservar:
-    int nbloque = (nbloqueMB * BLOCKSIZE * BYTE_SIZE) + (posbyte * BYTE_SIZE) + posbit;
+    int nbloque = ((((nbloqueMB - SB.posPrimerBloqueMB) * BLOCKSIZE) + posbyte) * BYTE_SIZE) + posbit;
 
     if (escribir_bit(nbloque, 1) == FALLO) {
         return FALLO;
     }
-    // revervamos la zona a
+    // reservamos la zona a 0
     unsigned char bufferCeros[BLOCKSIZE];
     memset(bufferCeros, 0, BLOCKSIZE);
     if (bwrite(nbloque, bufferCeros) == FALLO) {
@@ -462,7 +462,7 @@ int obtener_indice(unsigned int nblogico, int nivel_punteros) {
         case 3:
             return (nblogico - INDIRECTOS1) / (NPUNTEROS * NPUNTEROS);
         case 2:
-            return ((nblogico - INDIRECTOS1) % (NPUNTEROS)) / NPUNTEROS;
+            return ((nblogico - INDIRECTOS1) % (NPUNTEROS * NPUNTEROS)) / NPUNTEROS;
         case 1:
             return ((nblogico - INDIRECTOS1) % (NPUNTEROS * NPUNTEROS)) % NPUNTEROS;
         }

@@ -1,5 +1,6 @@
 #include "ficheros_basico.h"
 
+#define DEBUGTMP false
 #define DEBUGN3 false
 #define DEBUGN4 true
 
@@ -212,6 +213,13 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
+    #if DEBUGTMP
+    printf("%d\n", reservar_bloque());
+    printf("%d\n", reservar_bloque());
+    printf("%d\n", reservar_bloque());
+    printf("%d\n", reservar_bloque());
+
+    #endif
     #if DEBUGN3
     // Mostrar los atributos básicos
     if (mostrar_sf() == FALLO) {
