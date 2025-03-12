@@ -1,6 +1,7 @@
 #include "ficheros_basico.h"
 
-// #define DEBUGN3
+#define DEBUGN3 false
+#define DEBUGN4 true
 
 int mostrar_sf();
 int test_secuencialidad_AI();
@@ -211,7 +212,7 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
-    #ifdef DEBUGN3
+    #if DEBUGN3
     // Mostrar los atributos básicos
     if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
@@ -243,8 +244,29 @@ int main(int argc, char **argv) {
         return FALLO;
     }
     #endif
-
-    
+    #if DEBUGN4
+    // Mostrar los atributos básicos
+    if (mostrar_sf() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    unsigned int posInodoReservado = reservar_inodo('d', 7);
+    if (posInodoReservado == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> reservar_inodo() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    int test_set[] = {8, 204, 30004, 400004, 468750};
+    for (int ntest = 0; ntest < (sizeof(test_set)/sizeof(test_set[0])); ntest++) {
+        if (traducir_bloque_inodo(posInodoReservado, test_set[ntest], 'd') == FALLO){
+            perror(RED "Error: leer_sf.c -> main() -> for(ntest) -> traducir_bloque_inodo() == FALLO\n");
+            printf(RESET);
+            return FALLO;
+        }
+        printf("\n");
+    }
+    #endif
     // Desmontar el dispositivo
     if (bumount() == -1) {
         perror(RED "Error: leer_sf.c -> main() -> bumount() == FALLO\n");
