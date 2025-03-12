@@ -201,6 +201,48 @@ int mostrar_directorio_raiz() {
     return EXITO;
 }
 
+int mostrar_datos_inodo(int posInodoReservado) {
+    // Leer el superbloque
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Leer el inodo del directorio raiz
+    struct inodo inodo;
+    if (leer_inodo(posInodoReservado, &inodo) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_directorio_raiz() -> leer_inodo() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    // Leer el contenido del directorio raiz
+    struct tm *ts;
+    char atime[80];
+    char mtime[80];
+    char ctime[80];
+    char btime[80];
+    printf("DATOS DEL INODO RESERVADO\n");
+    printf("tipo: %c\n", inodo.tipo);
+    printf("permisos: %d\n", inodo.permisos);
+    ts = localtime(&inodo.atime);
+    strftime(atime, sizeof(atime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("atime: %s\n", atime);
+    ts = localtime(&inodo.mtime);
+    strftime(mtime, sizeof(mtime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("mtime: %s\n", mtime);
+    ts = localtime(&inodo.ctime);
+    strftime(ctime, sizeof(ctime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("ctime: %s\n", ctime);
+    ts = localtime(&inodo.btime);
+    strftime(btime, sizeof(btime), "%a %Y-%m-%d %H:%M:%S", ts);
+    printf("btime: %s\n", btime);
+    printf("nlinks: %d\n", inodo.nlinks);
+    printf("tamEnBytesLog: %d\n", inodo.tamEnBytesLog);
+    printf("numBloquesOcupados: %d\n\n", inodo.numBloquesOcupados);
+    return EXITO;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         perror(RED "Error: leer_sf.c -> main() -> argc != 2\n");
@@ -213,14 +255,14 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
-    #if DEBUGTMP
+#if DEBUGTMP
     printf("%d\n", reservar_bloque());
     printf("%d\n", reservar_bloque());
     printf("%d\n", reservar_bloque());
     printf("%d\n", reservar_bloque());
 
-    #endif
-    #if DEBUGN3
+#endif
+#if DEBUGN3
     // Mostrar los atributos básicos
     if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
@@ -251,30 +293,43 @@ int main(int argc, char **argv) {
         printf(RESET);
         return FALLO;
     }
-    #endif
-    #if DEBUGN4
+#endif
+#if DEBUGN4
     // Mostrar los atributos básicos
     if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
         printf(RESET);
         return FALLO;
     }
-    unsigned int posInodoReservado = reservar_inodo('d', 7);
+    unsigned int posInodoReservado = reservar_inodo('f', 6);
     if (posInodoReservado == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> reservar_inodo() == FALLO\n");
         printf(RESET);
         return FALLO;
     }
     int test_set[] = {8, 204, 30004, 400004, 468750};
-    for (int ntest = 0; ntest < (sizeof(test_set)/sizeof(test_set[0])); ntest++) {
-        if (traducir_bloque_inodo(posInodoReservado, test_set[ntest], 'd') == FALLO){
+    for (int ntest = 0; ntest < (sizeof(test_set) / sizeof(test_set[0])); ntest++) {
+        if (traducir_bloque_inodo(posInodoReservado, test_set[ntest], 'f') == FALLO) {
             perror(RED "Error: leer_sf.c -> main() -> for(ntest) -> traducir_bloque_inodo() == FALLO\n");
             printf(RESET);
             return FALLO;
         }
         printf("\n");
     }
-    #endif
+    if (mostrar_datos_inodo(posInodoReservado) == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> for(ntest) -> mostrar_datos_inodo() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    struct superbloque SB;
+    // Leer el superbloque
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: leer_sf.c -> mostrar_sf() -> bread() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
+    printf("SB.posPrimerinodoLibre = %d\n", SB.posPrimerInodoLibre);
+#endif
     // Desmontar el dispositivo
     if (bumount() == -1) {
         perror(RED "Error: leer_sf.c -> main() -> bumount() == FALLO\n");
