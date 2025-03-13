@@ -1,4 +1,4 @@
-#include "ficheros_basico.h"
+#include "ficheros.h"
 
 #define DEBUGTMP false
 #define DEBUGN3 false

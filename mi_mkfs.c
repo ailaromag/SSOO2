@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#include "ficheros_basico.h"
+#include "ficheros.h"
 
 // argc- indica el número de elementos escritos por consola
 // argv- vector de punteros a los parámetros
