@@ -57,13 +57,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
                 printf(RESET);
                 return FALLO;
             }
-            if (bread(nbfisico, *buffer_dest) == FALLO) {
-                perror(RED "Error: ficheros.c -> mi_write_f() -> for (int nBloqueActual = 1; nBloqueActual < (ultimoBL - primerBL); nBloqueActual++) -> bread() == FALLO");
-                printf(RESET);
-                return FALLO;
-            }
-            memcpy(buffer_dest, buf_original + nBytesEscritos, BLOCKSIZE);
-            if (bwrite(nbfisico, *buffer_dest)) {
+            if (bwrite(nbfisico, buf_original + nBytesEscritos) == FALLO) {
                 perror(RED "Error: ficheros.c -> mi_write_f() -> for (int nBloqueActual = 1; nBloqueActual < (ultimoBL - primerBL); nBloqueActual++) -> bwrite() == FALLO");
                 printf(RESET);
                 return FALLO;
@@ -82,11 +76,42 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             printf(RESET);
             return FALLO;
         }
-        memcpy(buffer_dest, buf_original + nBytesEscritos, desp2);
+        memcpy(buffer_dest, buf_original + nBytesEscritos, desp2 + 1);
+        if (bwrite(nbfisico, *buffer_dest) == FALLO) {
+            perror(RED "Error: ficheros.c -> mi_write_f() -> bwrite() == FALLO");
+            printf(RESET);
+            return FALLO;
+        }
         nBytesEscritos += bytesEscritura;
+    }
+    time_t tiempoModificacion = time(NULL);
+    inodo.ctime = tiempoModificacion;
+    inodo.mtime = tiempoModificacion;
+    if (escribir_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros.c -> mi_write_f() -> escribir_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
     }
     return nBytesEscritos;
 }
-int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes);
+int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes){
+    int nBytesLeidos = 0;
+    struct inodo inodo;
+    if (leer_inodo(ninodo,&inodo) == FALLO){
+        perror(RED "Error: ficheros.c -> mi_read_f() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    if ((inodo.permisos & 0b00000100) != 0b00000100) {
+        perror(RED "Error: ficheros.c -> mi_read_f() -> inodo.permisos & 0b00000100 != 0b00000100");
+        printf(RESET);
+        return FALLO;
+    }
+    if (offset >= inodo.tamEnBytesLog) {
+        return nBytesLeidos;
+    }
+    
+
+}
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat);
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos);
