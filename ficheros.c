@@ -49,23 +49,21 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         }
         nBytesEscritos += bytesEscritura;
         bytesEscritura = BLOCKSIZE;
-        int actualBL = primerBL + 1;
-        for (int nBloqueActual = 1; nBloqueActual < (ultimoBL - primerBL) - 1; nBloqueActual++) {
+        for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) {
             nbfisico = traducir_bloque_inodo(ninodo, actualBL, 1);
             if (nbfisico == FALLO) {
-                perror(RED "Error: ficheros.c -> mi_write_f() -> for (int nBloqueActual = 1; nBloqueActual < (ultimoBL - primerBL); nBloqueActual++) -> traducir_bloque_inodo() == FALLO");
+                perror(RED "Error: ficheros.c -> mi_write_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> traducir_bloque_inodo() == FALLO");
                 printf(RESET);
                 return FALLO;
             }
             if (bwrite(nbfisico, buf_original + nBytesEscritos) == FALLO) {
-                perror(RED "Error: ficheros.c -> mi_write_f() -> for (int nBloqueActual = 1; nBloqueActual < (ultimoBL - primerBL); nBloqueActual++) -> bwrite() == FALLO");
+                perror(RED "Error: ficheros.c -> mi_write_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> bwrite() == FALLO");
                 printf(RESET);
                 return FALLO;
             }
             nBytesEscritos += bytesEscritura;
-            actualBL++;
         }
-        nbfisico = traducir_bloque_inodo(ninodo, actualBL, 1);
+        nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
         if (nbfisico == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> nbfisico = traducir_bloque_inodo() == FALLO");
             printf(RESET);
@@ -94,10 +92,10 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     }
     return nBytesEscritos;
 }
-int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes){
+int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes) {
     int nBytesLeidos = 0;
     struct inodo inodo;
-    if (leer_inodo(ninodo,&inodo) == FALLO){
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_read_f() -> leer_inodo() == FALLO");
         printf(RESET);
         return FALLO;
@@ -110,8 +108,61 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     if (offset >= inodo.tamEnBytesLog) {
         return nBytesLeidos;
     }
-    
-
+    if ((offset + nbytes) >= inodo.tamEnBytesLog) {
+        nbytes = inodo.tamEnBytesLog - offset;
+    }
+    int primerBL = offset / BLOCKSIZE;
+    int ultimoBL = (offset + nbytes) / BLOCKSIZE;
+    int desp1 = offset % BLOCKSIZE;
+    int desp2 = (offset + nbytes) % BLOCKSIZE;
+    int nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+    if (nbfisico == FALLO) {
+        // Caso lectura en un bloque no reservado, no se considera error simplemente devolvemos 0 bytes de lectura
+        return nBytesLeidos;
+    }
+    unsigned char buf_tmp[BLOCKSIZE];
+    if (primerBL == ultimoBL) {
+        if (bread(primerBL, buf_tmp) == FALLO) {
+            perror(RED "Error: ficheros.c -> mi_read_f() -> bread() == FALLO");
+            printf(RESET);
+            return FALLO;
+        }
+        memcpy(buf_original, buf_tmp + desp1, nbytes);
+        nBytesLeidos += nbytes;
+    } else {
+        int bytesLectura = BLOCKSIZE - desp1;
+        if (bread(primerBL, buf_tmp) == FALLO) {
+            perror(RED "Error: ficheros.c -> mi_read_f() -> bread() == FALLO");
+            printf(RESET);
+            return FALLO;
+        }
+        memcpy(buf_original, buf_tmp + desp1, bytesLectura);
+        nBytesLeidos += bytesLectura;
+        bytesLectura = BLOCKSIZE;
+        for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) {
+            if (bread(actualBL, buf_original + nBytesLeidos) == FALLO) {
+                perror(RED "Error: ficheros.c -> mi_read_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> bread() == FALLO");
+                printf(RESET);
+                return FALLO;
+            }
+            nBytesLeidos += nbytes;
+        }
+        if (bread(ultimoBL, buf_tmp) == FALLO) {
+            perror(RED "Error: ficheros.c -> mi_read_f() -> bread() == FALLO");
+            printf(RESET);
+            return FALLO;
+        }
+        memcpy(buf_original, buf_tmp, desp2 + 1);
+        nBytesLeidos += nbytes;
+    }
+    time_t tiempoModificacion = time(NULL);
+    inodo.atime = tiempoModificacion;
+    if (escribir_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros.c -> mi_read_f() -> escribir_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    return nBytesLeidos;
 }
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat);
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos);
