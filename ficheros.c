@@ -182,4 +182,18 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat) {
     p_stat->tipo = inodo.tipo;
     return EXITO;
 }
-int mi_chmod_f(unsigned int ninodo, unsigned char permisos);
+int mi_chmod_f(unsigned int ninodo, unsigned char permisos) {
+    struct inodo inodo;
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros.c -> mi_chmod_f() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    inodo.permisos = permisos;
+    if (escribir_inodo(ninodo, &inodo)) {
+        perror(RED "Error: ficheros.c -> mi_chmod_f() -> escribir_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    return EXITO;
+}
