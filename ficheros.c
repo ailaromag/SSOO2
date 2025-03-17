@@ -164,5 +164,22 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     }
     return nBytesLeidos;
 }
-int mi_stat_f(unsigned int ninodo, struct STAT *p_stat);
+int mi_stat_f(unsigned int ninodo, struct STAT *p_stat) {
+    struct inodo inodo;
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros.c -> mi_stat_f() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    p_stat->atime = inodo.atime;
+    p_stat->btime = inodo.btime;
+    p_stat->ctime = inodo.ctime;
+    p_stat->mtime = inodo.mtime;
+    p_stat->nlinks = inodo.nlinks;
+    p_stat->numBloquesOcupados = inodo.numBloquesOcupados;
+    p_stat->permisos = inodo.permisos;
+    p_stat->tamEnBytesLog = inodo.tamEnBytesLog;
+    p_stat->tipo = inodo.tipo;
+    return EXITO;
+}
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos);
