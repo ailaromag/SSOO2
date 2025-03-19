@@ -5,21 +5,22 @@
 
 int main(int argc, char **argv) {
     if (argc != 3) {
-        fprintf(stderr, "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n");
+        perror(RED "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n");
         return FALLO;
     }
+
 
     char *nombre_dispositivo = argv[1];
     unsigned int ninodo = atoi(argv[2]);
 
     if (bmount(nombre_dispositivo) == FALLO) {
-        fprintf(stderr, "Error al montar el dispositivo\n");
+        perror(RED "Error al montar el dispositivo\n");
         return FALLO;
     }
 
     struct inodo inodo;
     if (leer_inodo(ninodo, &inodo) == FALLO) {
-        fprintf(stderr, "Error al leer el inodo %u\n", ninodo);
+        perror(RED "Error al leer el inodo \n");
         bumount();
         return FALLO;
     }
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
         leidos = mi_read_f(ninodo, buffer_texto, offset, TAMBUFFER);
 
         if (leidos < 0) {
-            fprintf(stderr, "Error en mi_read_f\n");
+            perror(RED "Error en mi_read_f\n");
             bumount();
             return FALLO;
         }
@@ -47,12 +48,12 @@ int main(int argc, char **argv) {
     }
 
     char string[128];
-    sprintf(string, "bytes leídos %d\n", total_leidos);
+    printf("bytes leídos %d\n", total_leidos);
     write(2, string, strlen(string));
-    fprintf(stderr, "tamEnBytesLog %d\n", inodo.tamEnBytesLog);
+    printf("tamEnBytesLog %d\n", inodo.tamEnBytesLog);
 
     if (bumount() == FALLO) {
-        fprintf(stderr, "Error al desmontar el dispositivo\n");
+        perror(RED "Error al desmontar el dispositivo\n");
         return FALLO;
     }
 
