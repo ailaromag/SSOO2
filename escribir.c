@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 }  
     
     if (bumount() == FALLO) {
-        perror("Error al desmontar el dispositivo");
+        perror(RED"Error al desmontar el dispositivo");
         return FALLO;
     }
     #endif
