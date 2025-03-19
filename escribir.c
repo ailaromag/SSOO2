@@ -23,7 +23,8 @@ int main(int argc, char **argv) {
     }
     char *camino = argv[1];
     if (bmount(camino) == FALLO) {
-        perror("Error al montar el dispositivo");
+        perror(RED "Error: escribir.c -> main() -> bmount() == FALLO");
+        printf(RESET);
         return FALLO;
     }
     char *texto = argv[2];
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
     }
 
     if (bumount() == FALLO) {
-        perror(RED "Error al desmontar el dispositivo");
+        perror(RED "Error: escribir.c -> main() -> bumount() == FALLO");
         return FALLO;
     }
 #endif

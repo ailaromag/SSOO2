@@ -491,8 +491,8 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
     while (nivel_punteros > 0) {
         if (ptr == 0) {  // No cuelgan bloques de punteros
             if (reservar == 0) {
-                perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> while (nivel_punteros > 0) -> reservar == 0");
-                printf(RESET);
+                // perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> while (nivel_punteros > 0) -> reservar == 0");
+                // printf(RESET);
                 return FALLO;
             }
             ptr = reservar_bloque();
@@ -528,8 +528,8 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
     // Ahora nos encontramos en el nivel de datos
     if (ptr == 0) {  // Si no existe bloque de datos
         if (reservar == 0) {
-            perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> reservar == 0");
-            printf(RESET);
+            // perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> reservar == 0");
+            // printf(RESET);
             return FALLO;
         }
         ptr = reservar_bloque();
