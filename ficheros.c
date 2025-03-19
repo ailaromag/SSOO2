@@ -18,22 +18,25 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     int ultimoBL = (offset + nbytes - 1) / BLOCKSIZE;
     int desp1 = offset % BLOCKSIZE;
     int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+
+    //Obtenemos el nº de bloque físico del primer BL
     int nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
     if (nbfisico == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> traducir_bloque_inodo() == FALLO");
         printf(RESET);
         return FALLO;
     }
-    unsigned char buffer_dest[BLOCKSIZE];
-    if (bread(nbfisico, buffer_dest) == FALLO) {
+    //Leemos el bloque antes de escribir para preservar el valor de los bytes no escritos
+    unsigned char buf_bloque[BLOCKSIZE];
+    if (bread(nbfisico, buf_bloque) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> bread() == FALLO");
         printf(RESET);
         return FALLO;
     }
     if (primerBL == ultimoBL) {
         // Caso de escritura en un solo bloque
-        memcpy(buffer_dest + desp1, buf_original, nbytes);
-        if (bwrite(nbfisico, buffer_dest)==FALLO) {
+        memcpy(buf_bloque + desp1, buf_original, nbytes);
+        if (bwrite(nbfisico, buf_bloque)==FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> if (primerBL == ultimoBL) -> bwrite() == FALLO");
             printf(RESET);
             return FALLO;
@@ -42,8 +45,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     } else {
         // Caso de escritura en varios bloques
         int bytesEscritura = BLOCKSIZE - desp1;
-        memcpy(buffer_dest + desp1, buf_original, bytesEscritura);  // Escribir en el primer bloque
-        if (bwrite(nbfisico, buffer_dest)==FALLO) {
+        memcpy(buf_bloque + desp1, buf_original, bytesEscritura);  // Escribir en el primer bloque
+        if (bwrite(nbfisico, buf_bloque)==FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> if (primerBL == ultimoBL) else -> bwrite() == FALLO");
             printf(RESET);
             return FALLO;
@@ -57,8 +60,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
                 printf(RESET);
                 return FALLO;
             }
-            memcpy(buffer_dest, buf_original + nBytesEscritos, BLOCKSIZE); 
-            if (bwrite(nbfisico, buffer_dest) == FALLO) {
+            memcpy(buf_bloque, buf_original + nBytesEscritos, BLOCKSIZE); 
+            if (bwrite(nbfisico, buf_bloque) == FALLO) {
                 perror(RED "Error: ficheros.c -> mi_write_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> bwrite() == FALLO");
                 printf(RESET);
                 return FALLO;
@@ -71,13 +74,13 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             printf(RESET);
             return FALLO;
         }
-        if (bread(nbfisico, buffer_dest) == FALLO) {
+        if (bread(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> bread() == FALLO");
             printf(RESET);
             return FALLO;
         }
-        memcpy(buffer_dest, buf_original + nBytesEscritos, desp2 + 1); 
-        if (bwrite(nbfisico, buffer_dest) == FALLO) {
+        memcpy(buf_bloque, buf_original + nBytesEscritos, desp2 + 1); 
+        if (bwrite(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> bwrite() == FALLO");
             printf(RESET);
             return FALLO;
@@ -119,13 +122,13 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     if (offset >= inodo.tamEnBytesLog) {
         return nBytesLeidos;
     }
-    if ((offset + nbytes) >= inodo.tamEnBytesLog) {
+    if ((offset + nbytes) > inodo.tamEnBytesLog) {
         nbytes = inodo.tamEnBytesLog - offset;
     }
     int primerBL = offset / BLOCKSIZE;
-    int ultimoBL = (offset + nbytes) / BLOCKSIZE;
+    int ultimoBL = (offset + nbytes - 1) / BLOCKSIZE;
     int desp1 = offset % BLOCKSIZE;
-    int desp2 = (offset + nbytes) % BLOCKSIZE;
+    int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
     int nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
     if (nbfisico == FALLO) {
         // Caso lectura en un bloque no reservado, no se considera error simplemente devolvemos 0 bytes de lectura
@@ -156,7 +159,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 printf(RESET);
                 return FALLO;
             }
-            nBytesLeidos += nbytes;
+            nBytesLeidos += bytesLectura;
         }
         if (bread(ultimoBL, buf_tmp) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_read_f() -> bread() == FALLO");
@@ -175,6 +178,8 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     }
     return nBytesLeidos;
 }
+
+
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat) {
     struct inodo inodo;
     if (leer_inodo(ninodo, &inodo) == FALLO) {
