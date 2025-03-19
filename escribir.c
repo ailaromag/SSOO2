@@ -4,7 +4,8 @@
 
 int main(int argc, char **argv) {
     #if DEBUGN5
-    int nInodoReservado;
+    int nInodoReservado = 0;
+    int InodoReservado;
     if(argc != 4) {
         perror(RED "Sintaxis: escribir <nombre_dispositivo> <\"$(cat fichero)\">  <diferentes_inodos>\n Offsets: 9000, 209000, 30725000, 409605000, 480000000 \n Si diferentes_inodos=0 se reserva solo un inodo para todos los offsets\n");
         printf(RESET);
@@ -26,23 +27,25 @@ int main(int argc, char **argv) {
     printf("longitud texto: %d\n\n", longitud); // Imprimir longitud del texto
   
     if(diferentes_inodos == 0){
-        nInodoReservado = reservar_inodo('f',6);
-        if (nInodoReservado == FALLO) {
+        InodoReservado = reservar_inodo('f',6);
+        if (InodoReservado == FALLO) {
             perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
             printf(RESET);
             return FALLO;
         }
+        nInodoReservado++;
         printf("Nº inodo reservado: %d\n", nInodoReservado);
     }
 
      for(int i = 0; i < num_offsets; i++){
     if(diferentes_inodos == 1){
-        nInodoReservado = reservar_inodo('f', 6);
-        if (nInodoReservado == FALLO) {
+        InodoReservado = reservar_inodo('f', 6);
+        if (InodoReservado == FALLO) {
             perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
             printf(RESET);
             return FALLO;
         }
+        nInodoReservado++;
         printf("Nº inodo reservado: %d\n", nInodoReservado);
     } 
     printf("offset: %d\n", offsets[i]); // Imprimir offset
