@@ -13,8 +13,12 @@ int main(int argc, char **argv) {
     char *camino = argv[1];
     char *texto = argv[2];
     int longitud = strlen(texto);
-    printf("Longitud = %d \n", longitud);
-    int diferentes_inodos = argv[3];
+
+    if (bmount(camino) == FALLO) {
+        perror("Error al montar el dispositivo");
+        return FALLO;
+    }
+    int diferentes_inodos = atoi(argv[3]);
     //Offsets para probar los punteros:
     int offsets[] = {9000, 209000, 30725000, 409605000, 480000000};
     int num_offsets = sizeof(offsets)/sizeof(offsets[0]);
@@ -26,6 +30,7 @@ int main(int argc, char **argv) {
             printf(RESET);
             return FALLO;
         }
+        printf("Nº inodo reservado: %d\n", nInodoReservado);
     }
      for(int i = 0; i < num_offsets; i++){
     if(diferentes_inodos == 1){
@@ -41,7 +46,12 @@ int main(int argc, char **argv) {
         perror(RED "Error: escribir.c -> main() -> mi_write_f() == FALLO");
         printf(RESET);
         return FALLO;
-    }     
-    } 
+    }    
+}  
+    
+    if (bumount() == FALLO) {
+        perror("Error al desmontar el dispositivo");
+        return FALLO;
+    }
     #endif
 }
