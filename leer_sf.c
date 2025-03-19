@@ -2,7 +2,8 @@
 
 #define DEBUGTMP false
 #define DEBUGN3 false
-#define DEBUGN4 true
+#define DEBUGN4 false
+#define DEBUGN5 true
 
 int mostrar_sf();
 int test_secuencialidad_AI();
@@ -329,6 +330,13 @@ int main(int argc, char **argv) {
         return FALLO;
     }
     printf("SB.posPrimerinodoLibre = %d\n", SB.posPrimerInodoLibre);
+#endif
+#if DEBUGN5
+    if (mostrar_sf() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
 #endif
     // Desmontar el dispositivo
     if (bumount() == -1) {
