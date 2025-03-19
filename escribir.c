@@ -23,6 +23,8 @@ int main(int argc, char **argv) {
     int offsets[] = {9000, 209000, 30725000, 409605000, 480000000};
     int num_offsets = sizeof(offsets)/sizeof(offsets[0]);
 
+    printf("longitud texto: %d\n\n", longitud); // Imprimir longitud del texto
+  
     if(diferentes_inodos == 0){
         nInodoReservado = reservar_inodo('f',6);
         if (nInodoReservado == FALLO) {
@@ -32,6 +34,7 @@ int main(int argc, char **argv) {
         }
         printf("Nº inodo reservado: %d\n", nInodoReservado);
     }
+
      for(int i = 0; i < num_offsets; i++){
     if(diferentes_inodos == 1){
         nInodoReservado = reservar_inodo('f', 6);
@@ -40,13 +43,30 @@ int main(int argc, char **argv) {
             printf(RESET);
             return FALLO;
         }
-    }  
+        printf("Nº inodo reservado: %d\n", nInodoReservado);
+    } 
+    printf("offset: %d\n", offsets[i]); // Imprimir offset
+
+    int primerBL = offsets[i] / BLOCKSIZE;
+    int nbfisico = traducir_bloque_inodo(nInodoReservado, primerBL, 1); // Llamada real
+    if(nbfisico != FALLO){
+            printf("[traducir_bloque_inodo()→ inodo.punterosDirectos[%d] = %d (reservado BF %d para BL %d)]\n", primerBL, nbfisico, nbfisico, primerBL); // Ejemplo de salida
+    }
+
+
     int bytes_escritos = mi_write_f(nInodoReservado, texto, offsets[i],longitud);
     if (bytes_escritos == FALLO) {
         perror(RED "Error: escribir.c -> main() -> mi_write_f() == FALLO");
         printf(RESET);
         return FALLO;
-    }    
+    }  
+    printf("Bytes escritos: %d\n", bytes_escritos);
+
+        struct STAT stat;
+        mi_stat_f(nInodoReservado, &stat); // Llamada real
+        printf("stat.tamEnBytesLog=%d\n", stat.tamEnBytesLog);
+        printf("stat.numBloquesOcupados=%d\n\n", stat.numBloquesOcupados);
+    
 }  
     
     if (bumount() == FALLO) {
@@ -54,4 +74,6 @@ int main(int argc, char **argv) {
         return FALLO;
     }
     #endif
+
+    return EXITO;
 }
