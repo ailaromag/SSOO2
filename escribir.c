@@ -4,31 +4,37 @@
 
 int main(int argc, char **argv) {
 #if DEBUGN5
+    int offsets[] = {9000, 209000, 30725000, 409605000, 480000000};
+    int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
     if (argc != 4) {
-        perror(RED "Sintaxis: escribir <nombre_dispositivo> <\"$(cat fichero)\">  <diferentes_inodos>\n Offsets: 9000, 209000, 30725000, 409605000, 480000000 \n Si diferentes_inodos=0 se reserva solo un inodo para todos los offsets\n");
+        fprintf(stderr, RED "Sintaxis: escribir <nombre_dispositivo> <\"$(cat fichero)\">  <diferentes_inodos>\nOffsets:");
+        for (int i = 0; i < num_offsets; i++) {
+            fprintf(stderr, " %d", offsets[i]);
+        }
+        fprintf(stderr, "\nSi diferentes_inodos=0 se reserva solo un inodo para todos los offsets\n");
+        printf(RESET);
+        return FALLO;
+    }
+    int diferentes_inodos = atoi(argv[3]);
+    if (diferentes_inodos != 0 && diferentes_inodos != 1) {
+        perror(RED "Error: escribir.c -> main() -> diferentes_inodos != 0 && diferentes_inodos != 1");
         printf(RESET);
         return FALLO;
     }
     char *camino = argv[1];
-    char *texto = argv[2];
-    int longitud = strlen(texto);
     if (bmount(camino) == FALLO) {
         perror("Error al montar el dispositivo");
         return FALLO;
     }
-    int diferentes_inodos = atoi(argv[3]);
+    char *texto = argv[2];
+    int longitud = strlen(texto);
     // Offsets para probar los punteros:
-    int offsets[] = {9000, 209000, 30725000, 409605000, 480000000};
-    int num_offsets = sizeof(offsets) / sizeof(offsets[0]);
-
     printf("longitud texto: %d\n\n", longitud);  // Imprimir longitud del texto
-
     int nInodoReservado = 0;
-    int InodoReservado;
-
+    int inodoReservado;
     if (diferentes_inodos == 0) {
-        InodoReservado = reservar_inodo('f', 6);
-        if (InodoReservado == FALLO) {
+        inodoReservado = reservar_inodo('f', 6);
+        if (inodoReservado == FALLO) {
             perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
             printf(RESET);
             return FALLO;
@@ -39,15 +45,15 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < num_offsets; i++) {
         if (diferentes_inodos == 1) {
-            InodoReservado = reservar_inodo('f', 6);
-            if (InodoReservado == FALLO) {
+            inodoReservado = reservar_inodo('f', 6);
+            if (inodoReservado == FALLO) {
                 perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
                 printf(RESET);
                 return FALLO;
             }
             nInodoReservado++;
-            printf("Nº inodo reservado: %d\n", nInodoReservado);
         }
+        printf("Nº inodo reservado: %d\n", nInodoReservado);
         printf("offset: %d\n", offsets[i]);  // Imprimir offset
 
         int primerBL = offsets[i] / BLOCKSIZE;
@@ -77,6 +83,5 @@ int main(int argc, char **argv) {
         return FALLO;
     }
 #endif
-
     return EXITO;
 }
