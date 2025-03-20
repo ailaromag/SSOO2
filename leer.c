@@ -1,15 +1,12 @@
 #include "ficheros.h"
 
-
-#define TAMBUFFER 1500 
+#define TAMBUFFER 1500
 
 int main(int argc, char **argv) {
-    
     if (argc != 3) {
         perror(RED "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n");
         return FALLO;
     }
-
 
     char *nombre_dispositivo = argv[1];
     unsigned int ninodo = atoi(argv[2]);
@@ -49,7 +46,7 @@ int main(int argc, char **argv) {
     }
 
     fprintf(stderr, "\nbytes leídos %d\n", total_leidos);
-    fprintf(stderr,"tamEnBytesLog %d\n", inodo.tamEnBytesLog);
+    fprintf(stderr, "tamEnBytesLog %d\n", inodo.tamEnBytesLog);
 
     if (bumount() == FALLO) {
         perror(RED "Error al desmontar el dispositivo\n");

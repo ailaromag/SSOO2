@@ -110,33 +110,33 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
 int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes) {
     int nBytesLeidos = 0;
     struct inodo inodo;
-    
+
     if (leer_inodo(ninodo, &inodo) == FALLO) {
         return FALLO;
     }
-    
+
     // Comprobamos permisos de lectura
     if ((inodo.permisos & 4) != 4) {
         fprintf(stderr, "No hay permisos de lectura\n");
         return 0;
     }
-    
+
     // Comprobamos offset
     if (offset >= inodo.tamEnBytesLog) {
         return 0;
     }
-    
+
     // Ajustamos nbytes si es necesario
     if ((offset + nbytes) >= inodo.tamEnBytesLog) {
         nbytes = inodo.tamEnBytesLog - offset;
     }
-    
+
     int primerBL = offset / BLOCKSIZE;
     int ultimoBL = (offset + nbytes - 1) / BLOCKSIZE;
     int desp1 = offset % BLOCKSIZE;
     unsigned char buf_bloque[BLOCKSIZE];
-    memset(buf_original, 0, nbytes); // Inicializamos el buffer con ceros
-    
+    memset(buf_original, 0, nbytes);  // Inicializamos el buffer con ceros
+
     // Caso: un solo bloque
     if (primerBL == ultimoBL) {
         int nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
@@ -158,7 +158,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             memcpy(buf_original, buf_bloque + desp1, bytesLeer);
         }
         nBytesLeidos = bytesLeer;
-        
+
         // Bloques intermedios
         for (int i = primerBL + 1; i < ultimoBL; i++) {
             nbfisico = traducir_bloque_inodo(ninodo, i, 0);
@@ -170,7 +170,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             }
             nBytesLeidos += BLOCKSIZE;
         }
-        
+
         // Último bloque
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
         nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
@@ -182,13 +182,13 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         }
         nBytesLeidos += desp2 + 1;
     }
-    
+
     // Actualizar atime
     inodo.atime = time(NULL);
     if (escribir_inodo(ninodo, &inodo) == FALLO) {
         return FALLO;
     }
-    
+
     return nBytesLeidos;
 }
 

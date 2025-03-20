@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
             printf(RESET);
             return FALLO;
         }
-        nInodoReservado = sb.totInodos - sb.cantInodosLibres - 1; // descontamos el inodo raiz
+        nInodoReservado = sb.totInodos - sb.cantInodosLibres - 1;  // descontamos el inodo raiz
         printf("Nº inodo reservado: %d\n", nInodoReservado);
 
         printf("offset: %d\n", offsets[i]);  // Imprimir offset

@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
     if (argc != 4) {
-        perror(RED"Sintaxis: permitir <nombre_dispositivo> <ninodo> <permisos>\n");
+        perror(RED "Sintaxis: permitir <nombre_dispositivo> <ninodo> <permisos>\n");
         return FALLO;
     }
 
