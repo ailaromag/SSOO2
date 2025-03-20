@@ -87,6 +87,11 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         // nBytesEscritos += bytesEscritura;
         nBytesEscritos += desp2 + 1;
     }
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros.c -> mi_write_f() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
     time_t tiempoModificacion = time(NULL);
     inodo.ctime = tiempoModificacion;
     inodo.mtime = tiempoModificacion;

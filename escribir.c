@@ -31,7 +31,8 @@ int main(int argc, char **argv) {
     int longitud = strlen(texto);
     // Offsets para probar los punteros:
     printf("longitud texto: %d\n\n", longitud);  // Imprimir longitud del texto
-    int nInodoReservado = 0;
+    struct superbloque sb;
+    int nInodoReservado;
     int inodoReservado;
     if (diferentes_inodos == 0) {
         inodoReservado = reservar_inodo('f', 6);
@@ -40,8 +41,6 @@ int main(int argc, char **argv) {
             printf(RESET);
             return FALLO;
         }
-        nInodoReservado++;
-        printf("Nº inodo reservado: %d\n", nInodoReservado);
     }
 
     for (int i = 0; i < num_offsets; i++) {
@@ -52,20 +51,18 @@ int main(int argc, char **argv) {
                 printf(RESET);
                 return FALLO;
             }
-            nInodoReservado++;
         }
-        printf("Nº inodo reservado: %d\n", nInodoReservado);
-        printf("offset: %d\n", offsets[i]);  // Imprimir offset
-
-        int primerBL = offsets[i] / BLOCKSIZE;
-        int nbfisico = traducir_bloque_inodo(nInodoReservado, primerBL, 1);  // Llamada real
-        if (nbfisico == FALLO) {
-            perror(RED "Error: escribir.c -> main() -> traducir_bloque_inodo() == FALLO");
+        if (bread(posSB, &sb) == FALLO) {
+            perror(RED "Error: escribir.c -> main() -> bread() == FALLO");
             printf(RESET);
             return FALLO;
         }
+        nInodoReservado = sb.totInodos - sb.cantInodosLibres - 1; // descontamos el inodo raiz
+        printf("Nº inodo reservado: %d\n", nInodoReservado);
 
-        int bytes_escritos = mi_write_f(nInodoReservado, texto, offsets[i], longitud);
+        printf("offset: %d\n", offsets[i]);  // Imprimir offset
+
+        int bytes_escritos = mi_write_f(inodoReservado, texto, offsets[i], longitud);
         if (bytes_escritos == FALLO) {
             perror(RED "Error: escribir.c -> main() -> mi_write_f() == FALLO");
             printf(RESET);
@@ -74,7 +71,7 @@ int main(int argc, char **argv) {
         printf("Bytes escritos: %d\n", bytes_escritos);
 
         struct STAT stat;
-        mi_stat_f(nInodoReservado, &stat);  // Llamada real
+        mi_stat_f(inodoReservado, &stat);  // Llamada real
         printf("stat.tamEnBytesLog=%d\n", stat.tamEnBytesLog);
         printf("stat.numBloquesOcupados=%d\n\n", stat.numBloquesOcupados);
     }
