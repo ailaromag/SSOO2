@@ -4,6 +4,7 @@
 #define TAMBUFFER 1500 
 
 int main(int argc, char **argv) {
+    
     if (argc != 3) {
         perror(RED "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n");
         return FALLO;
@@ -47,10 +48,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    char string[128];
-    printf("bytes leídos %d\n", total_leidos);
-    write(2, string, strlen(string));
-    printf("tamEnBytesLog %d\n", inodo.tamEnBytesLog);
+    fprintf(stderr, "\nbytes leídos %d\n", total_leidos);
+    fprintf(stderr,"tamEnBytesLog %d\n", inodo.tamEnBytesLog);
 
     if (bumount() == FALLO) {
         perror(RED "Error al desmontar el dispositivo\n");

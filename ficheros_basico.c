@@ -56,8 +56,7 @@ int initSB(unsigned int nbloques, unsigned int ninodos) {
 int initMB() {
     // Hay que leer el superbloque del sistema:
     struct superbloque SB;
-    int bytesLeidos = bread(posSB, &SB);
-    if (bytesLeidos == FALLO) {
+    if (bread(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO");
         printf(RESET);
         return FALLO;
