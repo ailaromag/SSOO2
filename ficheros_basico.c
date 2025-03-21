@@ -558,3 +558,112 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
     }
     return ptr;
 }
+int liberar_inodo(unsigned int ninodo) {
+    struct inodo inodo;
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    int numBloquesOcupados = inodo.numBloquesOcupados;
+    int numBloquesLiberados = liberar_bloques_inodo(0, &inodo);
+    if (numBloquesLiberados == FALLO || numBloquesLiberados != numBloquesOcupados) {
+        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> numBloquesLiberados == FALLO || numBloquesLiberados != numBloquesOcupados");
+        printf(RESET);
+        return FALLO;
+    }
+    inodo.tipo = 'l';
+    inodo.tamEnBytesLog = 0;
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> bread() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    inodo.punterosDirectos[0] = sb.posPrimerInodoLibre;
+    sb.posPrimerInodoLibre = ninodo;
+    sb.cantInodosLibres++;
+    if (bwrite(posSB, &sb) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> bwrite() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    inodo.ctime = time(NULL);
+    if (escribir_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> escribir_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    return ninodo;
+}
+int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
+    if (inodo->tamEnBytesLog == 0) return 0;
+    unsigned int nivel_punteros = 0;
+    unsigned int indice = 0;
+    unsigned int ptr = 0;
+    unsigned int nBL = 0;
+    unsigned int ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
+    if (ultimoBL % BLOCKSIZE == 0) {
+        ultimoBL--;
+    }
+    int nRangoBL;
+    unsigned int bloques_punteros[3][NPUNTEROS];
+    unsigned int bufAux_punteros[NPUNTEROS];
+    memset(bufAux_punteros, 0, BLOCKSIZE);
+    int ptr_nivel[3];
+    int indices[3];
+    int liberados = 0;
+    for (nBL = primerBL; nBL < ultimoBL; nBL++) {
+        nRangoBL = obtener_nRangoBL(inodo, nBL, &ptr);
+        if (nRangoBL == FALLO) return FALLO;
+        nivel_punteros = nRangoBL;
+        while (ptr > 0 && nivel_punteros > 0) {
+            indice = obtener_indice(nBL, nivel_punteros);
+            if (indice == 0 || nBL == primerBL) {
+                if (bread(ptr, bloques_punteros[nivel_punteros - 1])) {
+                    perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bread() == FALLO");
+                    printf(RESET);
+                    return FALLO;
+                }
+            }
+            ptr_nivel[nivel_punteros - 1] = ptr;
+            indices[nivel_punteros - 1] = indice;
+            ptr = bloques_punteros[nivel_punteros - 1][indice];
+            nivel_punteros--;
+        }
+        if (ptr > 0) {
+            liberar_bloque(ptr);
+            liberados++;
+            if (nRangoBL = 0) {
+                inodo->punterosDirectos[nBL] = 0;
+            } else {
+                nivel_punteros = 1;
+                while (nivel_punteros <= nRangoBL) {
+                    indice = indices[nivel_punteros - 1];
+                    bloques_punteros[nivel_punteros - 1][indice] = 0;
+                    ptr = ptr_nivel[nivel_punteros - 1];
+                    if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0) {
+                        liberar_bloque(ptr);
+                        liberados++;
+                        // TODO: mejora 1
+                        if (nivel_punteros == nRangoBL) {
+                            inodo->punterosIndirectos[nRangoBL - 1] = 0;
+                        }
+                        nivel_punteros++;
+                    } else {
+                        if (bwrite(ptr, bloques_punteros[nivel_punteros - 1]) == FALLO) {
+                            perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bwrite() == FALLO");
+                            printf(RESET);
+                            return FALLO;
+                        }
+                        nivel_punteros = nRangoBL + 1;
+                    }
+                }
+            }
+        } else {
+            // TODO: mejora 2
+        }
+    }
+    return liberados;
+}
+int mi_truncar_f(unsigned int ninodo, unsigned int nbytes);
