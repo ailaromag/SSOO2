@@ -634,7 +634,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
         if (ptr > 0) {
             liberar_bloque(ptr);
             liberados++;
-            if (nRangoBL = 0) {
+            if (nRangoBL == 0) {
                 inodo->punterosDirectos[nBL] = 0;
             } else {
                 nivel_punteros = 1;
@@ -666,4 +666,41 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     }
     return liberados;
 }
-int mi_truncar_f(unsigned int ninodo, unsigned int nbytes);
+int mi_truncar_f(unsigned int ninodo, unsigned int nbytes) {
+    struct inodo inodo;
+    if (leer_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> leer_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    if ((inodo.permisos & 0b00000010) != 0b00000010) {
+        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.permisos & 0b00000010 != 0b00000010");
+        printf(RESET);
+        return FALLO;
+    }
+    if (inodo.tamEnBytesLog > nbytes) {
+        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.tamEnBytesLog > nbytes");
+        printf(RESET);
+        return FALLO;
+    }
+    int primerBL = nbytes/BLOCKSIZE;
+    if ((nbytes % BLOCKSIZE) != 0) {
+        primerBL++;
+    }
+    int bloquesLiberados = liberar_bloques_inodo(primerBL, &inodo);
+    if (bloquesLiberados == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> liberar_bloques_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    time_t currTime = time(NULL);
+    inodo.mtime = currTime;
+    inodo.ctime = currTime;
+    inodo.tamEnBytesLog = nbytes;
+    if (escribir_inodo(ninodo, &inodo) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> escribir_inodo() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+    return bloquesLiberados;
+}
