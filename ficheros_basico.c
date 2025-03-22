@@ -618,16 +618,20 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
+    // Counter for statistics
+    int total_breads = 0;
+    int total_bwrites = 0;
+    int liberados = 0;
+
     int nRangoBL;
     unsigned int bloques_punteros[3][NPUNTEROS];
     unsigned int bufAux_punteros[NPUNTEROS];
     memset(bufAux_punteros, 0, BLOCKSIZE);
     int ptr_nivel[3];
     int indices[3];
-    int liberados = 0;
     
-    // For debugging
-    printf("\nLiberando bloques del inodo. Bloques ocupados inicialmente: %d\n", inodo->numBloquesOcupados);
+    // Debugging initial message
+    printf(BLUE NEGRITA"[liberar_bloques_inodo()→ primer BL: %d, último BL: %d]\n" RESET, primerBL, ultimoBL);
 
     for (nBL = primerBL; nBL <= ultimoBL; nBL++) {
         nRangoBL = obtener_nRangoBL(inodo, nBL, &ptr);
@@ -661,8 +665,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                 salto = ultimoBL - nBL + 1;
             }
             
+            printf(BLUE"[liberar_bloques_inodo()→ Del BL %d saltamos hasta BL %d]\n"RESET, nBL, nBL + salto - 1);
             nBL += salto - 1;  // -1 porque el for ya incrementa en 1
-            printf("Saltando %d bloques vacíos desde %d\n", salto, nBL - salto + 1);
             continue;
         }
 
@@ -681,6 +685,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     printf(RESET);
                     return FALLO;
                 }
+                total_breads++;
             }
             ptr_nivel[nivel_punteros - 1] = ptr;
             indices[nivel_punteros - 1] = indice;
@@ -690,7 +695,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
 
         // Liberar el bloque de datos si existe
         if (ptr > 0) {
-            printf("Liberando bloque de datos %d para BL %d\n", ptr, nBL);
+            printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de datos para BL %d]\n"RESET, ptr, nBL);
             liberar_bloque(ptr);
             liberados++;
             
@@ -707,7 +712,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     
                     // Comprobar si el bloque de punteros está vacío
                     if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0) {
-                        printf("Liberando bloque de punteros %d nivel %d\n", ptr, nivel_punteros);
+                        printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n"RESET, 
+                               ptr, nivel_punteros, nBL);
                         liberar_bloque(ptr);
                         liberados++;
                         
@@ -732,8 +738,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             
                             // Solo saltar si hay un salto real
                             if (bloques_saltar > 0) {
-                                printf("Saltando %d bloques tras liberar puntero nivel %d\n", 
-                                       bloques_saltar, nRangoBL);
+                                printf(MAGENTA"[liberar_bloques_inodo()→ Del BL %d saltamos hasta BL %d]\n"RESET, 
+                                       nBL, nBL + bloques_saltar);
                                 nBL += bloques_saltar;
                             }
                         }
@@ -745,6 +751,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             printf(RESET);
                             return FALLO;
                         }
+                        total_bwrites++;
                         // Salir del bucle, ya hemos actualizado lo necesario
                         nivel_punteros = nRangoBL + 1;
                     }
@@ -754,8 +761,12 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     }
 
     // Actualizar el número de bloques ocupados en el inodo
+    
     inodo->numBloquesOcupados -= liberados;
-    printf("Bloques liberados: %d, quedan ocupados: %d\n", liberados, inodo->numBloquesOcupados);
+    
+    // Final summary
+    printf(BLUE NEGRITA"[liberar_bloques_inodo()→ total bloques liberados: %d, total_breads: %d, total_bwrites: %d]\n" RESET, 
+           liberados, total_breads, total_bwrites);
 
     return liberados;
 }
