@@ -63,29 +63,33 @@ int initMB() {
     }
 
     int tamMetadatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
-
-    // int nBloques = (tamMetadatos / 8) / BLOCKSIZE; // esto nos da el valor de el último bloque que se rellenara
-    int bytesAuno = tamMetadatos / 8;
-    int bytesUltimoBloque = tamMetadatos % 8;
-    unsigned char bufMB[bytesAuno];
-
-    for (int i = 0; i < bytesAuno; i++) {
-        bufMB[i] = 255;
+    for (int i = 0; i < tamMetadatos; i++) {
+        escribir_bit(i, 1);
     }
-    if (bytesUltimoBloque != 0) {
-        unsigned char mask = ((1 << bytesUltimoBloque) - 1) << (8 - bytesUltimoBloque);  // si bytesUltimoBloque = 3, 00001000 => 00000111 => 11100000
-        bufMB[bytesAuno] = mask;
-    }
-    // Hay que restar los bloques que ocupan los metadatos
-    // de los bloques libres:
     SB.cantBloquesLibres -= tamMetadatos;
 
+    // // int nBloques = (tamMetadatos / 8) / BLOCKSIZE; // esto nos da el valor de el último bloque que se rellenara
+    // int bytesAuno = tamMetadatos / 8;
+    // int bytesUltimoBloque = tamMetadatos % 8;
+    // unsigned char bufMB[bytesAuno];
+
+    // for (int i = 0; i < bytesAuno; i++) {
+    //     bufMB[i] = 255;
+    // }
+    // if (bytesUltimoBloque != 0) {
+    //     unsigned char mask = ((1 << bytesUltimoBloque) - 1) << (8 - bytesUltimoBloque);  // si bytesUltimoBloque = 3, 00001000 => 00000111 => 11100000
+    //     bufMB[bytesAuno] = mask;
+    // }
+    // // Hay que restar los bloques que ocupan los metadatos
+    // // de los bloques libres:
+    // SB.cantBloquesLibres -= tamMetadatos;
+
     // Escribir el mapa de bits en el dispositivo
-    if (bwrite(SB.posPrimerBloqueMB, bufMB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
-        printf(RESET);
-        return FALLO;
-    }
+    // if (bwrite(SB.posPrimerBloqueMB, bufMB) == FALLO) {
+    //     perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
+    //     printf(RESET);
+    //     return FALLO;
+    // }
 
     // Escribir el superbloque actualizado en el dispositivo
     if (bwrite(posSB, &SB) == FALLO) {
@@ -255,12 +259,8 @@ int reservar_bloque() {
     bool byteACeroEncontrado = false;
     int posbyte = 0;
     // Localizamos el 1er byte con algún 0
-    while (!byteACeroEncontrado && posbyte < BLOCKSIZE) {
-        if (bufferMB[posbyte] != 255) {
-            byteACeroEncontrado = true;
-        } else {
+    while ((bufferMB[posbyte] == 255) && posbyte < BLOCKSIZE) {
             posbyte++;
-        }
     }
     // Localizamos el bit que vale 0 dentro del byte
     unsigned char mascara = 0b10000000;
@@ -648,8 +648,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
             indice = obtener_indice(nBL, nivel_punteros);
             if (bloques_leidos[nivel_punteros - 1] != ptr) {
                 if (bloques_leidos[nivel_punteros - 1] != -1) {
-                printf(BLUE"[liberar_bloques_inodo()→ Del BL %d saltamos hasta BL %d]\n"RESET,
-                           rango_inicial, nBL);
+                printf(BLUE"[liberar_bloques_inodo()→ Del BL %d saltamos hasta BL %d]\n"RESET, rango_inicial, nBL);
                 }
                 if (bread(ptr, bloques_punteros[nivel_punteros - 1]) == FALLO) {
                 perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bread() == FALLO"RESET);
@@ -669,8 +668,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
 
         if (ptr > 0) { // Si existe un bloque de datos
             liberar_bloque(ptr); 
-            printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n"RESET, 
-    ptr, nivel_punteros, nBL);
+            printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n"RESET, ptr, nivel_punteros, nBL);
             liberados++;
 
             if (nRangoBL == 0) { 
@@ -685,8 +683,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     // Si el bloque de punteros está vacío, lo liberamos
                     if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0) {
                         liberar_bloque(ptr); // Liberar el bloque de punteros
-                        printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n"RESET, 
-                               ptr, nivel_punteros, nBL);
+                        printf(GRAY"[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n"RESET, ptr, nivel_punteros, nBL);
                         liberados++;
                         if (nivel_punteros == nRangoBL) {
                             inodo->punterosIndirectos[nRangoBL - 1] = 0;
@@ -709,8 +706,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     // Actualizar el número de bloques ocupados en el inodo
     inodo->numBloquesOcupados -= liberados;
      // Final summary
-    printf(BLUE NEGRITA"[liberar_bloques_inodo()→ total bloques liberados: %d, total_breads: %d, total_bwrites: %d]\n" RESET, 
-           liberados, total_breads, total_bwrites);
+    printf(BLUE NEGRITA"[liberar_bloques_inodo()→ total bloques liberados: %d, total_breads: %d, total_bwrites: %d]\n" RESET, liberados, total_breads, total_bwrites);
     return liberados; 
 }
 
