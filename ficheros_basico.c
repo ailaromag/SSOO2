@@ -605,7 +605,6 @@ int liberar_inodo(unsigned int ninodo) {
     }
     return ninodo;
 }
-
 int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     // Si el fichero está vacío devolvemos 0 bloques liberados
     if (inodo->tamEnBytesLog == 0) return 0;
@@ -621,6 +620,9 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     // Contador para contar escrituras y lecturas en bloques
     int total_breads = 0;
     int total_bwrites = 0;
+
+    // Guardar el nBL previo para el print de debug
+    int nBLPrevio;
 
     memset(bufAux_punteros, 0, BLOCKSIZE);
 
@@ -663,7 +665,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                 return FALLO;
             }
             liberados++;
-            printf(GRAY "[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
+            printf(GRAY "[liberar_bloques_inodo() -> liberado BF %d de datos para BL %d]\n" RESET, ptr, nBL);
             // Si estamos en el nivel 0 de inodo
             if (nRangoBL == 0) {
                 inodo->punterosDirectos[nBL] = 0;
@@ -681,12 +683,24 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO" RESET);
                             return FALLO;
                         }
-                        printf(GRAY "[liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
+                        printf(GRAY "[liberar_bloques_inodo() -> liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
                         liberados++;
-                        // Mejora 1: 256^nivel_punteros = (2^8)^nivel_punteros = 2^(8*nivel_punteros), no tenemos que preocuparnos por nivel_punteros = 0 ya que empieza desde 1 en esta sección
+
+                        // Mejora 1: Saltar los BLs restantes que no se requiera explorar
                         int nBLPrevio = nBL;
-                        nBL = 12 + (1 << (8 * nivel_punteros));
-                        printf(BLUE "[liberar_bloques_inodo()→ Del BL %d saltamos hasta BL %d]\n" RESET, nBLPrevio, nBL);
+                        if (nivel_punteros == 1) {
+                            // Para nivel 1, saltamos al final de este bloque de punteros
+                            nBL += NPUNTEROS - (indice + 1);
+                        } else if (nivel_punteros == 2) {
+                            // Para nivel 2, saltamos NPUNTEROS bloques por cada entrada restante
+                            nBL += (NPUNTEROS * (NPUNTEROS - (indice + 1)));
+                        } else if (nivel_punteros == 3) {
+                            // Para nivel 3, saltamos NPUNTEROS^2 bloques por cada entrada restante
+                            nBL += (NPUNTEROS * NPUNTEROS * (NPUNTEROS - (indice + 1)));
+                        }
+
+                        if (nBL > ultimoBL) nBL = ultimoBL;  // No pasarse del último bloque
+                        printf(MAGENTA "[liberar_bloques_inodo() -> Saltamos del BL %d saltamos hasta BL %d]\n" RESET, nBLPrevio, nBL);
 
                         // Borramos el puntero indirecto del inodo
                         if (nivel_punteros == nRangoBL) {
@@ -704,7 +718,13 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     }
                 }
             }
-        }   // TODO: Mejora 2
+        } else {
+            if (nivel_punteros == 2) {
+                nBL = (((nBL - DIRECTOS) / NPUNTEROS + 1) * NPUNTEROS + DIRECTOS) - 1;
+            } else if (nivel_punteros == 3) {
+                nBL = (((nBL - INDIRECTOS0) / (NPUNTEROS * NPUNTEROS) + 1) * (NPUNTEROS * NPUNTEROS) + INDIRECTOS0) - 1;
+            }
+        }
     }
     // Actualizar el número de bloques ocupados en el inodo
     inodo->numBloquesOcupados -= liberados;
