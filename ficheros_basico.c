@@ -687,7 +687,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                         liberados++;
 
                         // Mejora 1: Saltar los BLs restantes que no se requiera explorar
-                        int nBLPrevio = nBL;
+                        nBLPrevio = nBL;
                         if (nivel_punteros == 1) {
                             // Para nivel 1, saltamos al final de este bloque de punteros
                             nBL += NPUNTEROS - (indice + 1);
@@ -713,18 +713,20 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bwrite() == FALLO" RESET);
                             return FALLO;
                         }
+                        printf(ORANGE "[liberar_bloques_inodo() -> salvado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
                         total_bwrites++;
                         nivel_punteros = nRangoBL + 1;
                     }
                 }
             }
-        } else {
-            if (nivel_punteros == 2) {
-                nBL = (((nBL - DIRECTOS) / NPUNTEROS + 1) * NPUNTEROS + DIRECTOS) - 1;
-            } else if (nivel_punteros == 3) {
-                nBL = (((nBL - INDIRECTOS0) / (NPUNTEROS * NPUNTEROS) + 1) * (NPUNTEROS * NPUNTEROS) + INDIRECTOS0) - 1;
-            }
-        }
+        } 
+        // else {
+        //     if (nivel_punteros == 2) {
+        //         nBL = (((nBL - DIRECTOS) / NPUNTEROS + 1) * NPUNTEROS + DIRECTOS) - 1;
+        //     } else if (nivel_punteros == 3) {
+        //         nBL = (((nBL - INDIRECTOS0) / (NPUNTEROS * NPUNTEROS) + 1) * (NPUNTEROS * NPUNTEROS) + INDIRECTOS0) - 1;
+        //     }
+        // }
     }
     // Actualizar el número de bloques ocupados en el inodo
     inodo->numBloquesOcupados -= liberados;
@@ -745,7 +747,7 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes) {
         printf(RESET);
         return FALLO;
     }
-    if (inodo.tamEnBytesLog > nbytes) {
+    if (inodo.tamEnBytesLog < nbytes) {
         perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.tamEnBytesLog > nbytes");
         printf(RESET);
         return FALLO;
