@@ -53,20 +53,20 @@ int initSB(unsigned int nbloques, unsigned int ninodos) {
 /**
  * Inicializa el mapa de bits poniendo a 1 los bits que representan los metadatos.
  */
-int initMB() {
-    // Hay que leer el superbloque del sistema:
-    struct superbloque SB;
-    if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO");
-        printf(RESET);
-        return FALLO;
-    }
+//  int initMB() {
+//      // Hay que leer el superbloque del sistema:
+//     struct superbloque SB;
+//      if (bread(posSB, &SB) == FALLO) {
+//          perror(RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO");
+//          printf(RESET);
+//          return FALLO;
+//      }
 
-    int tamMetadatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
-    for (int i = 0; i < tamMetadatos; i++) {
-        escribir_bit(i, 1);
-    }
-    SB.cantBloquesLibres -= tamMetadatos;
+//      int tamMetadatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
+//      for (int i = 0; i < tamMetadatos; i++) {
+//          escribir_bit(i, 1);
+//      }
+//      SB.cantBloquesLibres -= tamMetadatos;
 
     // // int nBloques = (tamMetadatos / 8) / BLOCKSIZE; // esto nos da el valor de el último bloque que se rellenara
     // int bytesAuno = tamMetadatos / 8;
@@ -92,6 +92,65 @@ int initMB() {
     // }
 
     // Escribir el superbloque actualizado en el dispositivo
+//      if (bwrite(posSB, &SB) == FALLO) {
+//         perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
+//          printf(RESET);
+//          return FALLO;
+//      }
+//      return EXITO;
+// }
+
+
+int initMB() {
+    // Hay que leer el superbloque del sistema:
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+
+    int bloquesMetadatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
+    unsigned char bufMB[BLOCKSIZE]; //Seran los bits que hay que poner a 1
+    int bloquesMB = bloquesMetadatos/(8*BLOCKSIZE);
+    if(bloquesMetadatos%(8*BLOCKSIZE)!=0){
+        bloquesMB++;
+    }
+
+
+    for(int i = 0; i <bloquesMB-1; i++){
+        memset(bufMB,255,BLOCKSIZE);
+        //Escribimos el bloque completo
+        if (bwrite(posSB+ tamSB+i, bufMB) == FALLO) {
+            perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
+            printf(RESET);
+            return FALLO;
+        }
+    }
+
+    //Ahora hay que escribir el último bloque
+    //Calculamos los bits que quedan sueltos
+    int bitsUltimoBloque = bloquesMetadatos % (8 * BLOCKSIZE);  
+    int bytesLlenos = bitsUltimoBloque / 8;  
+    int bitsRestantes = bitsUltimoBloque % 8;  
+
+    // Llenamos los bytes completos del último bloque con 1s
+    for (int i = 0; i < bytesLlenos; i++) {
+        bufMB[i] = 255;
+    }
+
+    // Si hay bits restantes, activarlos en el siguiente byte
+    if (bitsRestantes > 0) {
+        bufMB[bytesLlenos] = (0xFF << (8 - bitsRestantes));
+    }
+    // Escribir el último bloque
+    if (bwrite(posSB + tamSB + bloquesMB - 1, bufMB) == FALLO) {
+        perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
+        printf(RESET);
+        return FALLO;
+    }
+
+    SB.cantBloquesLibres -= bloquesMetadatos;
     if (bwrite(posSB, &SB) == FALLO) {
         perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
         printf(RESET);
@@ -267,10 +326,14 @@ int reservar_bloque() {
     int posbit = 0;
     while (bufferMB[posbyte] & mascara) {
         bufferMB[posbyte] <<= 1;
+        
         posbit++;
     }
+    
     // Finalmente calculamos el bloque físico que podemos reservar:
     int nbloque = ((((nbloqueMB - SB.posPrimerBloqueMB) * BLOCKSIZE) + posbyte) * BYTE_SIZE) + posbit;
+   // int nbloque = ((((nbloqueMB) * BLOCKSIZE) + posbyte) * BYTE_SIZE) + posbit;
+//////////////////////////////////////////
 
     if (escribir_bit(nbloque, 1) == FALLO) {
         return FALLO;
