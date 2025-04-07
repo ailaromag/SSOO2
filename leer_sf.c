@@ -2,8 +2,8 @@
 
 #define DEBUGTMP false
 #define DEBUGN3 false
-#define DEBUGN4 false
-#define DEBUGN5 true
+#define DEBUGN4 true
+#define DEBUGN5 false
 
 int mostrar_sf();
 int test_secuencialidad_AI();
