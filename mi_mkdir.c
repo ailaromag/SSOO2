@@ -1,5 +1,16 @@
 #include "directorios.h"
 
+bool ends_with_slash_ignore_spaces (const char *str);
+
+bool ends_with_slash_ignore_spaces (const char *str) {
+    if (str == NULL || str[0] == '\0') {
+        return false;
+    }
+    int i = strlen(str) - 1;
+    while(i >= 0 && isspace((unsigned char) str[i])) i--;
+    return (i > 0 && str[i] == '/');
+}
+
 int main(int argc, char **argv) {
     // Mira si tiene 4 argumentos incluidos el nombre de programa
     if (argc != 4) {
@@ -20,6 +31,11 @@ int main(int argc, char **argv) {
     }
 
     const char *camino = argv[3];
+    if (ends_with_slash_ignore_spaces(camino) == false) {
+        fprintf(stderr, RED "Error: No es un directorio, no acaba en '/'. Para crear fichero use mi_touch.\n" RESET);
+        return FALLO;
+    }
+
     int error = mi_creat(camino, permisos);
     if (error == FALLO) {
         fprintf(stderr, RED "Error: mi_mkdir.c -> main() -> mi_creat() == FALLO" RESET);

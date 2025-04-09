@@ -7,6 +7,7 @@
 #include <string.h>    // strerror()
 #include <sys/stat.h>  // S_IRUSR, S_IWUSR
 #include <unistd.h>    // SEEK_SET, read(), write(), open(), close(), lseek()
+#include <ctype.h>
 
 #define BLOCKSIZE 1024  // bytes
 #define EXITO 0         // para gestión errores
