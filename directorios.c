@@ -1,9 +1,11 @@
 #include "directorios.h"
 
+#define DEBUG_BUSCAR_ENTRADA true
+
 // Dada una cadena de caracteres *camino (que comience por '/'), separa su contenido en dos: *inicial y *final
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
     if (camino == NULL || camino[0] != '/') {
-        fprintf(stderr, RED "Error: directorios.c -> extraer_camino() -> if (camino == NULL || camino[0] != '/')" RESET);
+        // fprintf(stderr, RED "Error: directorios.c -> extraer_camino() -> if (camino == NULL || camino[0] != '/')" RESET);
         return FALLO;
     }
     // Obtenemos inicial
@@ -20,7 +22,7 @@ int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
         strcpy(inicial, camino + 1);
         strcpy(final, "");
     }
-    printf("*camino: %s \n *inicial: %s \n *final: %s \n *tipo: %c \n", camino, inicial, final, *tipo);
+    // printf("*camino: %s \n *inicial: %s \n *final: %s \n *tipo: %c \n", camino, inicial, final, *tipo);
 
     return EXITO;
 }
@@ -34,7 +36,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo;
     int num_entradas_inodo;
 
-    if (camino_parcial[0] == '/') {
+    if (camino_parcial[0] == '/' && strlen(camino_parcial) == 1) {
         struct superbloque sb;
         if (bread(posSB, &sb) == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> bread(posSB, &sb) == FALLO" RESET);
@@ -47,6 +49,10 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     if (extraer_camino(camino_parcial, inicial, final, &tipo) == FALLO) {
         return ERROR_CAMINO_INCORRECTO;
     }
+
+#if DEBUG_BUSCAR_ENTRADA
+    printf(GRAY "[buscar_entrada() -> inicial: %s, final: %s, reservar: %d]\n" RESET, inicial, final, reservar);
+#endif
 
     if (leer_inodo(*p_inodo_dir, &inodo_dir) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> leer_inodo(*p_inodo_dir, &inodo_dir) == FALLO" RESET);
@@ -79,8 +85,9 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 }
             }
         }
+        memcpy(&entrada, &buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))], sizeof(struct entrada));
     }
-    if ((strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre) != 0) && (num_entradas_inodo == cant_entradas_inodo)) {
+    if ((strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre) != 0) /*&& (num_entradas_inodo == cant_entradas_inodo)*/) {
         switch (reservar) {
         case 0:
             return ERROR_NO_EXISTE_ENTRADA_CONSULTA;
@@ -102,6 +109,9 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 } else {
                     entrada.ninodo = reservar_inodo(tipo, permisos);
                 }
+#if DEBUG_BUSCAR_ENTRADA
+                printf(GRAY "[buscar_entrada() -> reservado inodo %d tipo %c con permisos %d para %s]\n" RESET, entrada.ninodo, tipo, permisos, inicial);
+#endif
                 if (mi_write_f(*p_inodo_dir, &entrada, num_entradas_inodo * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
                     if (entrada.ninodo != -1) {
                         if (liberar_inodo(entrada.ninodo) == FALLO) {
@@ -112,6 +122,9 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> mi_write_f(*p_inodo_dir, &entrada, num_entradas_inodo * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
                     return FALLO;
                 }
+#if DEBUG_BUSCAR_ENTRADA
+                printf(GRAY "[buscar_entrada() -> creada entrada: %s, %d]\n" RESET, inicial, entrada.ninodo);
+#endif
             }
             break;
         }
@@ -133,27 +146,29 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
 void mostrar_error_buscar_entrada(int error) {
     // fprintf(stderr, "Error: %d\n", error);
+    fprintf(stderr, RED);
     switch (error) {
-    case -2:
+    case -2:  // ERROR_CAMINO_INCORRECTO
         fprintf(stderr, "Error: Camino incorrecto.\n");
         break;
-    case -3:
+    case -3:  // ERROR_PERMISO_LECTURA
         fprintf(stderr, "Error: Permiso denegado de lectura.\n");
         break;
-    case -4:
+    case -4:  // ERROR_NO_EXISTE_ENTRADA_CONSULTA
         fprintf(stderr, "Error: No existe el archivo o el directorio.\n");
         break;
-    case -5:
+    case -5:  // ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO
         fprintf(stderr, "Error: No existe algún directorio intermedio.\n");
         break;
-    case -6:
+    case -6:  // ERROR_PERMISO_ESCRITURA
         fprintf(stderr, "Error: Permiso denegado de escritura.\n");
         break;
-    case -7:
+    case -7:  // ERROR_ENTRADA_YA_EXISTENTE
         fprintf(stderr, "Error: El archivo ya existe.\n");
         break;
-    case -8:
+    case -8:  // ERROR_NO_SE_PUEDE_CREAR_ENTRADA_EN_UN_FICHERO
         fprintf(stderr, "Error: No es un directorio.\n");
         break;
     }
+    fprintf(stderr, RESET);
 }

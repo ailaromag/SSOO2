@@ -1,5 +1,7 @@
 #include "ficheros_basico.h"
 
+#define DEBUG_TRADUCIR_BLOQUE_INODO false
+
 /**
  * Calcula el tamaño en bloques necesario para el mapa de bits.
  */
@@ -517,15 +519,17 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
             salvar_inodo = 1;
             if (nivel_punteros == nRangoBL) {
                 inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                // Print de depuración para punteros indirectos
+#if DEBUG_TRADUCIR_BLOQUE_INODO
                 printf(GRAY "[traducir_bloque_inodo() -> inodo.punterosIndirectos[%d] = %d (reservado BF %d para punteros_nivel%d)]\n", nRangoBL - 1, ptr, ptr, nRangoBL);
                 printf(RESET);
+#endif
             } else {
                 buffer[indice] = ptr;
                 bwrite(ptr_ant, buffer);
-                // Print de depuración para punteros de nivel intermedio
+#if DEBUG_TRADUCIR_BLOQUE_INODO
                 printf(GRAY "[traducir_bloque_inodo() -> punteros_nivel%d [%d] = %d (reservado BF %d para punteros_nivel%d)]\n", nivel_punteros + 1, indice, ptr, ptr, nivel_punteros);
                 printf(RESET);
+#endif
             }
             memset(buffer, 0, BLOCKSIZE);
         } else {
@@ -555,13 +559,17 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
         if (nRangoBL == 0) {
             inodo.punterosDirectos[nblogico] = ptr;
             // Print de depuración para punteros directos
+#if DEBUG_TRADUCIR_BLOQUE_INODO
             printf(GRAY "[traducir_bloque_inodo() -> inodo.punterosDirectos[%d] = %d (reservado BF %d para BL %d)]\n", nblogico, ptr, ptr, nblogico);
             printf(RESET);
+#endif
         } else {
             buffer[indice] = ptr;
             bwrite(ptr_ant, buffer);
+#if DEBUG_TRADUCIR_BLOQUE_INODO
             printf(GRAY "[traducir_bloque_inodo() -> punteros_nivel1 [%d] = %d (reservado BF %d para BL %d)]\n", indice, ptr, ptr, nblogico);
             printf(RESET);
+#endif
         }
     }
     // Salvar el inodo si se han hecho cambios
