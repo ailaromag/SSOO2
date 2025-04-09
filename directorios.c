@@ -8,11 +8,13 @@ int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
     }
     // Obtenemos inicial
     // Localiza el primer '/' después del inicial
-    char *pos_final = strchr(inicial + 1, '/');
+    char *pos_final = strchr(camino + 1, '/');
     if (pos_final != NULL) {
         *tipo = 'd';
         strcpy(final, pos_final);
-        inicial = strtok(camino, "/");
+        int inicial_lenght = pos_final - (camino + 1);
+        strncpy(inicial, camino + 1, inicial_lenght);
+        inicial[inicial_lenght] = '\0';
     } else {
         *tipo = 'f';
         strcpy(inicial, camino + 1);
@@ -50,14 +52,14 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> leer_inodo(*p_inodo_dir, &inodo_dir) == FALLO" RESET);
     }
 
-    if (inodo_dir.permisos & 4 != 4) {
+    if ((inodo_dir.permisos & 4) != 4) {
         return ERROR_PERMISO_LECTURA;
     }
 
     struct entrada buff_entradas[BLOCKSIZE / sizeof(struct entrada)];
     memset(buff_entradas, 0, sizeof(struct entrada));
 
-    int cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(struct entrada);
+    cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(struct entrada);
 
     if (cant_entradas_inodo > 0) {
         int bytes_leidos = mi_read_f(*p_inodo_dir, buff_entradas, 0, BLOCKSIZE);
@@ -72,7 +74,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 memset(buff_entradas, 0, sizeof(struct entrada));
                 bytes_leidos += mi_read_f(*p_inodo_dir, buff_entradas, bytes_leidos, BLOCKSIZE);
                 if (bytes_leidos == FALLO) {
-                    fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> while ((num_entradas_inodo < cant_entradas_inodo) && (strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre))) -> mi_read_f(*p_inodo_dir, buff_entradas, bytes_leidos, BLOCKSIZE) == FALLO\n" RESET);
+                    fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> while ((num_entradas_inodo < cant_entradas_inodo) && (strcmp(inicial, buff_entradas[num_entradas_inodo %% (BLOCKSIZE / sizeof(struct entrada))].nombre))) -> mi_read_f(*p_inodo_dir, buff_entradas, bytes_leidos, BLOCKSIZE) == FALLO\n" RESET);
                     return FALLO;
                 }
             }
@@ -91,7 +93,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 return ERROR_PERMISO_ESCRITURA;
             } else {
                 strcpy(entrada.nombre, inicial);
-                if (tipo = 'd') {
+                if (tipo == 'd') {
                     if (strcmp(final, "/") == 0) {
                         entrada.ninodo = reservar_inodo(tipo, permisos);
                     } else {
@@ -154,24 +156,4 @@ void mostrar_error_buscar_entrada(int error) {
         fprintf(stderr, "Error: No es un directorio.\n");
         break;
     }
-}
-
-int main() {  // main de pruebas
-    char inicial[100], final[100], tipo;
-    // const char *camino = "/home/usuario/documentos/archivo.txt";
-
-    // int result = extraer_camino(camino, inicial, final, &tipo);
-    const char *camino2 = "/";
-
-    int result2 = extraer_camino(camino2, inicial, final, &tipo);
-
-    // if (result == 0) {
-    //     printf("Inicial: %s\n", inicial);
-    //     printf("Final: %s\n", final);
-    //     printf("Tipo: %c\n", tipo);
-    // } else {
-    //     printf("Error al procesar el camino.\n");
-    // }
-
-    return 0;
 }

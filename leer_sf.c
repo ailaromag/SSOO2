@@ -1,9 +1,10 @@
-#include "ficheros.h"
+#include "directorios.h"
 
 #define DEBUGTMP false
 #define DEBUGN3 false
 #define DEBUGN4 false
-#define DEBUGN5 true
+#define DEBUGN5 false
+#define DEBUGN7 true
 
 int mostrar_sf();
 int test_secuencialidad_AI();
@@ -11,6 +12,8 @@ int reservar_liberar_bloque();
 int mostrar_bitmap_bordes_seccion();
 int imprimir_info_leer_bit(int pos, int posPrimerBloqueMB);
 int mostrar_directorio_raiz();
+int mostrar_datos_inodo(int posInodoReservado);
+void mostrar_buscar_entrada(char *camino, char reservar);
 
 int mostrar_sf() {
     struct superbloque SB;
@@ -244,6 +247,19 @@ int mostrar_datos_inodo(int posInodoReservado) {
     return EXITO;
 }
 
+void mostrar_buscar_entrada(char *camino, char reservar) {
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+    printf("\ncamino: %s, reservar: %d\n", camino, reservar);
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, reservar, 6)) < 0) {
+        mostrar_error_buscar_entrada(error);
+    }
+    printf("**********************************************************************\n");
+    return;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) {
         perror(RED "Error: leer_sf.c -> main() -> argc != 2\n");
@@ -338,7 +354,24 @@ int main(int argc, char **argv) {
         return FALLO;
     }
 #endif
-    // Desmontar el dispositivo
+#if DEBUGN7
+    // Mostrar creación directorios y errores
+    mostrar_buscar_entrada("pruebas/", 1);            // ERROR_CAMINO_INCORRECTO
+    mostrar_buscar_entrada("/pruebas/", 0);           // ERROR_NO_EXISTE_ENTRADA_CONSULTA
+    mostrar_buscar_entrada("/pruebas/docs/", 1);      // ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO
+    mostrar_buscar_entrada("/pruebas/", 1);           // creamos /pruebas/
+    mostrar_buscar_entrada("/pruebas/docs/", 1);      // creamos /pruebas/docs/
+    mostrar_buscar_entrada("/pruebas/docs/doc1", 1);  // creamos /pruebas/docs/doc1
+    mostrar_buscar_entrada("/pruebas/docs/doc1/doc11", 1);
+    // ERROR_NO_SE_PUEDE_CREAR_ENTRADA_EN_UN_FICHERO
+    mostrar_buscar_entrada("/pruebas/", 1);           // ERROR_ENTRADA_YA_EXISTENTE
+    mostrar_buscar_entrada("/pruebas/docs/doc1", 0);  // consultamos /pruebas/docs/doc1
+    mostrar_buscar_entrada("/pruebas/docs/doc1", 1);  // ERROR_ENTRADA_YA_EXISTENTE
+    mostrar_buscar_entrada("/pruebas/casos/", 1);     // creamos /pruebas/casos/
+    mostrar_buscar_entrada("/pruebas/docs/doc2", 1);  // creamos /pruebas/docs/doc2
+
+#endif
+                                                      //  Desmontar el dispositivo
     if (bumount() == -1) {
         perror(RED "Error: leer_sf.c -> main() -> bumount() == FALLO\n");
         printf(RESET);

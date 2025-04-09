@@ -265,7 +265,6 @@ int reservar_bloque() {
             nbloqueMB++;
         }
     }
-    bool byteACeroEncontrado = false;
     int posbyte = 0;
     // Localizamos el 1er byte con algún 0
     while ((bufferMB[posbyte] == 255) && posbyte < BLOCKSIZE) {
