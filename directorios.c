@@ -172,3 +172,15 @@ void mostrar_error_buscar_entrada(int error) {
     }
     fprintf(stderr, RESET);
 }
+
+int mi_creat(const char *camino, unsigned char permisos) {
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_creat() -> bread(posSB, &sb) == FALLO" RESET);
+    }
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_inodo;
+    unsigned int p_entrada;
+    int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 1, permisos);
+    return error;
+}
