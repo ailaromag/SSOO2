@@ -641,8 +641,12 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     int total_breads = 0;
     int total_bwrites = 0;
 
-    // Guardar el nBL previo para el print de debug
+    // Variables para rastrear saltos de mejora 1
     int nBLPrevio;
+
+    // Variables para rastrear saltos de mejora 2
+    int inicio_salto = -1;
+    bool en_salto = false;
 
     memset(bufAux_punteros, 0, BLOCKSIZE);
 
@@ -757,8 +761,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     bloquesRestantes = (NPUNTEROS * NPUNTEROS) + NPUNTEROS * NPUNTEROS * (NPUNTEROS - (indice_actual + 1));
                     nBL += bloquesRestantes;
                 }
-                printf(BLUE "[liberar_bloques_inodo() -> BL %d no existe, saltamos %d bloques hasta BL %d]\n" RESET,
-                       nBL - bloquesRestantes, bloquesRestantes, nBL);
+                // printf(BLUE "[liberar_bloques_inodo() -> BL %d no existe, saltamos %d bloques hasta BL %d]\n" RESET, nBL - bloquesRestantes, bloquesRestantes, nBL);
             }
         }
     }
