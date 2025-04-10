@@ -739,14 +739,37 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     }
                 }
             }
+        } else {
+            if (nivel_punteros == 2) {
+                nBL += NPUNTEROS - 1;
+            } else if (nivel_punteros == 3) {
+                nBL += (NPUNTEROS * NPUNTEROS) - 1;
+            }
         }
-        // else {
-        //     if (nivel_punteros == 2) {
-        //         nBL = (((nBL - DIRECTOS) / NPUNTEROS + 1) * NPUNTEROS + DIRECTOS) - 1;
-        //     } else if (nivel_punteros == 3) {
-        //         nBL = (((nBL - INDIRECTOS0) / (NPUNTEROS * NPUNTEROS) + 1) * (NPUNTEROS * NPUNTEROS) + INDIRECTOS0) - 1;
-        //     }
-        // }
+        if (ptr == 0) {
+            // Calcular el salto basado en índice actual y nivel_punteros
+            if (nivel_punteros > 0) {
+                int indice_actual = obtener_indice(nBL, nivel_punteros);
+                int bloquesRestantes = 0;
+
+                if (nivel_punteros == 1) {
+                    // Saltar hasta el final del bloque de punteros de nivel 1
+                    bloquesRestantes = NPUNTEROS - (indice_actual + 1);
+                    nBL += bloquesRestantes;
+                } else if (nivel_punteros == 2) {
+                    // Saltar NPUNTEROS bloques por cada entrada restante en nivel 2
+                    bloquesRestantes = NPUNTEROS * (NPUNTEROS - (indice_actual + 1));
+                    nBL += bloquesRestantes;
+                } else if (nivel_punteros == 3) {
+                    // Saltar NPUNTEROS^2 bloques por cada entrada restante en nivel 3
+                    bloquesRestantes = NPUNTEROS * NPUNTEROS * (NPUNTEROS - (indice_actual + 1));
+                    nBL += bloquesRestantes;
+                }
+
+                printf(BLUE "[liberar_bloques_inodo() -> BL %d no existe, saltamos %d bloques hasta BL %d]\n" RESET,
+                       nBL - bloquesRestantes, bloquesRestantes, nBL);
+            }
+        }
     }
     // Actualizar el número de bloques ocupados en el inodo
     inodo->numBloquesOcupados -= liberados;
