@@ -184,3 +184,19 @@ int mi_creat(const char *camino, unsigned char permisos) {
     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 1, permisos);
     return error;
 }
+
+int mi_chmod(const char *camino, unsigned char permisos){
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_creat() -> bread(posSB, &sb) == FALLO" RESET);
+    }
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_inodo;
+    unsigned int p_entrada;
+    int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, permisos);
+    if (mi_chmod_f(p_inodo, permisos) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_chmod() -> mi_chmod_f(p_inodo, permisos) == FALLO" RESET);
+        return FALLO;
+    }
+    return error;
+}

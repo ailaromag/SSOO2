@@ -644,10 +644,6 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     // Variables para rastrear saltos de mejora 1
     int nBLPrevio;
 
-    // Variables para rastrear saltos de mejora 2
-    int inicio_salto = -1;
-    bool en_salto = false;
-
     memset(bufAux_punteros, 0, BLOCKSIZE);
 
     // Obtener el último bloque lógico ocupado
