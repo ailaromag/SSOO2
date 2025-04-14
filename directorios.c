@@ -177,6 +177,7 @@ int mi_creat(const char *camino, unsigned char permisos) {
     struct superbloque sb;
     if (bread(posSB, &sb) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_creat() -> bread(posSB, &sb) == FALLO" RESET);
+        return FALLO;
     }
     unsigned int p_inodo_dir = sb.posInodoRaiz;
     unsigned int p_inodo;
@@ -185,10 +186,44 @@ int mi_creat(const char *camino, unsigned char permisos) {
     return error;
 }
 
+int mi_dir(const char *camino, char *buffer, char tipo, char flag) {
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> bread(posSB, &sb) == FALLO" RESET);
+        return FALLO;
+    }
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_inodo;
+    unsigned int p_entrada;
+    int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 2);   // no reservar y permiso para lectura
+    
+    if (tipo == 'f') {
+        // Caso fichero
+
+    } else if (tipo == 'd') {
+        // Caso directorio
+
+    } else {
+        fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> if (tipo != 'd' && tipo != 'f'), tiene que ser un fichero o directorio");
+        return FALLO;
+    }
+
+    if (flag == 0) {
+        // Caso ls normal
+    } else if (flag == 1) {
+        // Caso ls -l
+    } else {
+        fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> if (tipo != 0 && tipo != 1), tiene que ser un 0 (ls) o un 1 (ls -l)");
+    }
+
+    return error;
+}
+
 int mi_chmod(const char *camino, unsigned char permisos){
     struct superbloque sb;
     if (bread(posSB, &sb) == FALLO) {
-        fprintf(stderr, RED "Error: directorios.c -> mi_creat() -> bread(posSB, &sb) == FALLO" RESET);
+        fprintf(stderr, RED "Error: directorios.c -> mi_chmod() -> bread(posSB, &sb) == FALLO" RESET);
+        return FALLO;
     }
     unsigned int p_inodo_dir = sb.posInodoRaiz;
     unsigned int p_inodo;
