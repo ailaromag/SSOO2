@@ -8,7 +8,7 @@ bool ends_with_slash_ignore_spaces (const char *str) {
     }
     int i = strlen(str) - 1;
     while(i >= 0 && isspace((unsigned char) str[i])) i--;
-    return (i > 0 && str[i] == '/');
+    return (i >= 0 && str[i] == '/');
 }
 
 int main(int argc, char **argv) {
