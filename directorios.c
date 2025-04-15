@@ -87,7 +87,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         }
         memcpy(&entrada, &buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))], sizeof(struct entrada));
     }
-    if ((strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre) != 0) /*&& (num_entradas_inodo == cant_entradas_inodo)*/) {
+    if ((strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre) != 0) && (num_entradas_inodo == cant_entradas_inodo)) {
         switch (reservar) {
         case 0:
             return ERROR_NO_EXISTE_ENTRADA_CONSULTA;
