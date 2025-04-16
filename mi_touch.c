@@ -1,13 +1,13 @@
 #include "directorios.h"
 
-bool ends_with_slash_ignore_spaces (const char *str);
+bool ends_with_slash_ignore_spaces(const char *str);
 
-bool ends_with_slash_ignore_spaces (const char *str) {
+bool ends_with_slash_ignore_spaces(const char *str) {
     if (str == NULL || str[0] == '\0') {
         return false;
     }
     int i = strlen(str) - 1;
-    while(i >= 0 && isspace((unsigned char) str[i])) i--;
+    while (i >= 0 && isspace((unsigned char)str[i])) i--;
     return (i >= 0 && str[i] == '/');
 }
 
@@ -19,8 +19,8 @@ int main(int argc, char **argv) {
     }
     // Convertimos los permisos de string a int
     int permisos = atoi(argv[2]);
-    if(permisos < 0 || permisos > 7) {
-        fprintf(stderr, RED "Error: mi_touch.c -> main() -> permiso < 0 || permiso > 7" RESET);
+    if (permisos < 0 || permisos > 7) {
+        fprintf(stderr, RED "Error: modo inválido: <<%d>>\n" RESET, permisos);
         return FALLO;
     }
 

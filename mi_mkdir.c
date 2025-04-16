@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     // Convertimos los permisos de string a int
     int permisos = atoi(argv[2]);
     if(permisos < 0 || permisos > 7) {
-        fprintf(stderr, RED "Error: mi_mkdir.c -> main() -> permiso < 0 || permiso > 7" RESET);
+        fprintf(stderr, RED "Error: modo inválido: <<%d>>\n" RESET, permisos);
         return FALLO;
     }
 
