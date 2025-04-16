@@ -28,13 +28,13 @@ int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
 }
 
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos) {
-    struct entrada entrada;
+    struct entrada entrada = {"", 0};
     struct inodo inodo_dir;
     char inicial[TAMNOMBRE];
     char final[TAMNOMBRE];
     char tipo;
-    int cant_entradas_inodo;
-    int num_entradas_inodo;
+    int cant_entradas_inodo = 0;
+    int num_entradas_inodo = 0;
 
     if (camino_parcial[0] == '/' && strlen(camino_parcial) == 1) {
         struct superbloque sb;
@@ -87,7 +87,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         }
         memcpy(&entrada, &buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))], sizeof(struct entrada));
     }
-    if ((strcmp(inicial, buff_entradas[num_entradas_inodo % (BLOCKSIZE / sizeof(struct entrada))].nombre) != 0) && (num_entradas_inodo == cant_entradas_inodo)) {
+    if ((strcmp(inicial, entrada.nombre) != 0) && (num_entradas_inodo == cant_entradas_inodo)) {
         switch (reservar) {
         case 0:
             return ERROR_NO_EXISTE_ENTRADA_CONSULTA;
@@ -312,6 +312,7 @@ int mi_chmod(const char *camino, unsigned char permisos) {
     unsigned int p_inodo;
     unsigned int p_entrada;
     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, permisos);
+    printf("chmooooood: %d", p_inodo);
     if (mi_chmod_f(p_inodo, permisos) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_chmod() -> mi_chmod_f(p_inodo, permisos) == FALLO" RESET);
         return FALLO;
