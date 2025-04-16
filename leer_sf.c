@@ -355,6 +355,11 @@ int main(int argc, char **argv) {
     }
 #endif
 #if DEBUGN7
+    if (mostrar_sf() == FALLO) {
+        perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
+        printf(RESET);
+        return FALLO;
+    }
     // Mostrar creación directorios y errores
     mostrar_buscar_entrada("pruebas/", 1);            // ERROR_CAMINO_INCORRECTO
     mostrar_buscar_entrada("/pruebas/", 0);           // ERROR_NO_EXISTE_ENTRADA_CONSULTA

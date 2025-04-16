@@ -59,6 +59,10 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     }
 
     if ((inodo_dir.permisos & 4) != 4) {
+#if DEBUG_BUSCAR_ENTRADA
+        printf(GRAY "[buscar_entrada() -> El inodo %d no tiene permisos de lectura]\n" RESET, *p_inodo_dir);
+        fflush(stdout);     // Para imprimirlo en orden
+#endif
         return ERROR_PERMISO_LECTURA;
     }
 
@@ -260,6 +264,8 @@ int mi_dir(const char *camino, char *buffer, char tipo, char flag) {
         strcat(buffer, "\n");
         strcat(buffer, "Tipo\tModo\tmTime\t\t\tTamaño\tNombre");
         strcat(buffer, "\n");
+        strcat(buffer, "------------------------------------------------------");
+        strcat(buffer, "\n");
         struct entrada entrada_actual;
         struct STAT stat_actual;
         struct tm *tm;
@@ -312,7 +318,6 @@ int mi_chmod(const char *camino, unsigned char permisos) {
     unsigned int p_inodo;
     unsigned int p_entrada;
     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, permisos);
-    printf("chmooooood: %d", p_inodo);
     if (mi_chmod_f(p_inodo, permisos) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_chmod() -> mi_chmod_f(p_inodo, permisos) == FALLO" RESET);
         return FALLO;
