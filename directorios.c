@@ -61,7 +61,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     if ((inodo_dir.permisos & 4) != 4) {
 #if DEBUG_BUSCAR_ENTRADA
         printf(GRAY "[buscar_entrada() -> El inodo %d no tiene permisos de lectura]\n" RESET, *p_inodo_dir);
-        fflush(stdout);     // Para imprimirlo en orden
+        fflush(stdout);  // Para imprimirlo en orden
 #endif
         return ERROR_PERMISO_LECTURA;
     }
@@ -323,4 +323,24 @@ int mi_chmod(const char *camino, unsigned char permisos) {
         return FALLO;
     }
     return error;
+}
+
+int mi_stat(const char *camino, struct STAT *p_stat) {
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_stat() -> bread(posSB, &sb) == FALLO" RESET);
+        return FALLO;
+    }
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_inodo;
+    unsigned int p_entrada;
+    int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 2);
+    if (error < 0) {
+        return error;
+    }
+    if (mi_stat_f(p_inodo, p_stat) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_stat() -> mi_stat_f(p_inodo, p_stat) == FALLO" RESET);
+        return FALLO;
+    }
+    return p_inodo;
 }
