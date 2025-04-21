@@ -4,7 +4,7 @@
 #define DEBUGN3 false
 #define DEBUGN4 false
 #define DEBUGN5 false
-#define DEBUGN7 true
+#define DEBUGN7 false
 
 int mostrar_sf();
 int test_secuencialidad_AI();
@@ -252,7 +252,9 @@ void mostrar_buscar_entrada(char *camino, char reservar) {
     unsigned int p_inodo = 0;
     unsigned int p_entrada = 0;
     int error;
+    #if DEBUGN7
     printf("\ncamino: %s, reservar: %d\n", camino, reservar);
+    #endif
     if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, reservar, 6)) < 0) {
         mostrar_error_buscar_entrada(error);
     }
@@ -354,12 +356,13 @@ int main(int argc, char **argv) {
         return FALLO;
     }
 #endif
-#if DEBUGN7
+
     if (mostrar_sf() == FALLO) {
         perror(RED "Error: leer_sf.c -> main() -> mostrar_sf() == FALLO\n");
         printf(RESET);
         return FALLO;
     }
+    #if DEBUGN7
     // Mostrar creación directorios y errores
     mostrar_buscar_entrada("pruebas/", 1);            // ERROR_CAMINO_INCORRECTO
     mostrar_buscar_entrada("/pruebas/", 0);           // ERROR_NO_EXISTE_ENTRADA_CONSULTA
