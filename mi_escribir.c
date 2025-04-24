@@ -25,12 +25,12 @@ int main(int argc, char **argv) {
         return FALLO;
     }
 #if DEBUGN9
-    printf("longitud texto: %d\n", strlen(texto));
+    printf("longitud texto: %ld\n", strlen(texto));
 #endif
     int error = mi_write(ruta_fichero, texto, offset, strlen(texto));
     if (error == FALLO) {
-        fprintf(stderr, RED "Error: mi_escribir.c -> main() -> mi_write() == FALLO\n" RESET);
-        return FALLO;
+        // no tiene permiso de lectura, entonces bytes escritos = 0;
+        error = 0;
     } else if (error < 0) {
         mostrar_error_buscar_entrada(error);
         return FALLO;

@@ -1,6 +1,6 @@
 #include "directorios.h"
 
-#define DEBUG_BUSCAR_ENTRADA true
+#define DEBUG_BUSCAR_ENTRADA false
 #define DEBUG_MI_WRITE true
 #define DEBUG_MI_READ true
 // =======
@@ -179,7 +179,7 @@ void mostrar_error_buscar_entrada(int error) {
         fprintf(stderr, "Error: No es un directorio.\n");
         break;
     }
-    fprintf(stderr, RESET);   
+    fprintf(stderr, RESET);
 }
 
 int mi_creat(const char *camino, unsigned char permisos) {
@@ -218,8 +218,8 @@ int mi_dir(const char *camino, char *buffer, char tipo, char flag) {
         fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> mi_stat_f(p_inodo, &inode_stat) == FALLO" RESET);
         return FALLO;
     }
-    if ((inodo_stat.permisos & 2) != 2) {
-        fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> inodo_stat.permisos & 2 != 2" RESET);
+    if ((inodo_stat.permisos & 4) != 4) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> inodo_stat.permisos & 4 != 4" RESET);
         return FALLO;
     }
 
@@ -378,10 +378,14 @@ int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned 
 #if DEBUG_MI_WRITE
         printf(ORANGE "[mi_write() -> Actualizamos la caché de escritura]\n" RESET);
 #endif
+    } else {
+#if DEBUG_MI_READ
+        printf(BLUE "[mi_write() -> Utilizamos la caché de escritura en vez de llamar a buscar_entrada()]\n" RESET);
+#endif
     }
     int bytes_written = mi_write_f(p_inodo, buf, offset, nbytes);
     if (bytes_written == FALLO) {
-        fprintf(stderr, RED "Error: directorios.c -> mi_write() -> mi_write_f(p_inodo, buf, offset, nbytes) == FALLO" RESET);
+        // fprintf(stderr, RED "Error: directorios.c -> mi_write() -> mi_write_f(p_inodo, buf, offset, nbytes) == FALLO\n" RESET);
         return FALLO;
     }
     return bytes_written;
@@ -412,6 +416,13 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
             fprintf(stderr, RED "Error: directorios.c -> mi_read() -> escribir_cache_lru(UltimasEntradasLectura, camino, p_inodo) == FALLO" RESET);
             return FALLO;
         }
+#if DEBUG_MI_READ
+        printf(ORANGE "[mi_read() -> Actualizamos la caché de lectura]\n" RESET);
+#endif
+    } else {
+#if DEBUG_MI_READ
+        printf(BLUE "[mi_read() -> Utilizamos la caché de lectura en vez de llamar a buscar_entrada()]\n" RESET);
+#endif
     }
     int bytes_read = mi_read_f(p_inodo, buf, offset, nbytes);
     if (bytes_read == FALLO) {
@@ -464,8 +475,8 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
 //         return FALLO;
 //     }
 //     unsigned int p_inodo_dir = sb.posInodoRaiz;
-//     unsigned int p_inodo;      
-//     unsigned int p_entrada;    
+//     unsigned int p_inodo;
+//     unsigned int p_entrada;
 
 //     // Buscar la entrada para obtener el inodo
 //     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0,6);
@@ -484,7 +495,7 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
 // }
 
 // int mi_read(const char *camino, char *buf, unsigned int offset, unsigned int nbytes){
-        
+
 // struct superbloque sb;
 // if (bread(posSB, &sb) == FALLO) {
 //     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> bread(posSB, &sb) == FALLO" RESET);
@@ -493,7 +504,7 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
 // // Variables para búsqueda
 // unsigned int p_inodo_dir = sb.posInodoRaiz;
 // unsigned int p_inodo, p_entrada;
-    
+
 // // Buscar la entrada para obtener el inodo del fichero
 // if (buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 6) < 0) {
 //     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> buscar_entrada() == FALLO" RESET);
@@ -505,7 +516,7 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
 //     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> mi_write_f()== FALLO" RESET);
 //     return FALLO;
 // }
-    
+
 // return bytes_leidos; // Retornar cantidad de bytes leídos
 // }
 // >>>>>>> d9edd3f560facaef2121a39d30487480d2f3b593

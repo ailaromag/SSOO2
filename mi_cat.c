@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
         return FALLO;
     }
 
+    printf("Total_leidos: %d", error);
+
     printf("%s", buffer_texto);
 
     if (bumount(disco) == FALLO) {
