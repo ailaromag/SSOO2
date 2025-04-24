@@ -1,6 +1,8 @@
 #include "directorios.h"
 
 #define DEBUG_BUSCAR_ENTRADA true
+#define DEBUG_MI_WRITE true
+#define DEBUG_MI_READ true
 
 // Dada una cadena de caracteres *camino (que comience por '/'), separa su contenido en dos: *inicial y *final
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
@@ -343,4 +345,109 @@ int mi_stat(const char *camino, struct STAT *p_stat) {
         return FALLO;
     }
     return p_inodo;
+}
+
+int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned int nbytes) {
+    unsigned int p_inodo;
+    bool found;
+    if (leer_cache_lru(UltimasEntradasEscritura, camino, &p_inodo, &found) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_write() -> leer_cache_lru(UltimasEntradasEscritura, camino, p_inodo, &found) == FALLO" RESET);
+        return FALLO;
+    }
+    if (found == false) {
+        // Caso de que no esté en el cache
+        struct superbloque sb;
+        if (bread(posSB, &sb) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_write() -> bread(posSB, &sb) == FALLO" RESET);
+            return FALLO;
+        }
+        unsigned int p_inodo_dir = sb.posInodoRaiz;
+        unsigned int p_entrada;
+        int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 6);
+        if (error < 0) {
+            return error;
+        }
+        // Actualizamos el cache
+        if (escribir_cache_lru(UltimasEntradasEscritura, camino, p_inodo) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_write() -> escribir_cache_lru(UltimasEntradasEscritura, camino, p_inodo) == FALLO" RESET);
+            return FALLO;
+        }
+#if DEBUG_MI_WRITE
+        printf(ORANGE "[mi_write() -> Actualizamos la caché de escritura]\n" RESET);
+#endif
+    }
+    int bytes_written = mi_write_f(p_inodo, buf, offset, nbytes);
+    if (bytes_written == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_write() -> mi_write_f(p_inodo, buf, offset, nbytes) == FALLO" RESET);
+        return FALLO;
+    }
+    return bytes_written;
+}
+
+int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nbytes) {
+    unsigned int p_inodo;
+    bool found;
+    if (leer_cache_lru(UltimasEntradasLectura, camino, &p_inodo, &found) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_read() -> leer_cache_lru(UltimasEntradasLectura, camino, p_inodo, &found) == FALLO" RESET);
+        return FALLO;
+    }
+    if (found == false) {
+        // Caso de que no esté en el cache
+        struct superbloque sb;
+        if (bread(posSB, &sb) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_read() -> bread(posSB, &sb) == FALLO" RESET);
+            return FALLO;
+        }
+        unsigned int p_inodo_dir = sb.posInodoRaiz;
+        unsigned int p_entrada;
+        int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4);
+        if (error < 0) {
+            return error;
+        }
+        // Actualizamos el cache
+        if (escribir_cache_lru(UltimasEntradasLectura, camino, p_inodo) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_read() -> escribir_cache_lru(UltimasEntradasLectura, camino, p_inodo) == FALLO" RESET);
+            return FALLO;
+        }
+    }
+    int bytes_read = mi_read_f(p_inodo, buf, offset, nbytes);
+    if (bytes_read == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_read() -> mi_read_f(p_inodo, buf, offset, nbytes) == FALLO" RESET);
+        return FALLO;
+    }
+    return bytes_read;
+}
+
+int leer_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int *p_inodo, bool *found) {
+    *found = false;
+    for (int i = 0; i < CACHE_SIZE && *found == false; i++) {
+        if (strcmp(UltimasEntradas[i].camino, camino) == 0) {
+            // actualizamos el tiempo de consulta
+            if (gettimeofday(&UltimasEntradas[i].ultima_consulta, NULL) == FALLO) {
+                fprintf(stderr, RED "Error: directorios.c -> leer_cache_lru() -> gettimeofday(&UltimasEntradas[i].ultima_consulta, NULL) == FALLO" RESET);
+                return FALLO;
+            }
+            *p_inodo = UltimasEntradas[i].p_inodo;
+            *found = true;
+        }
+    }
+    return EXITO;
+}
+
+int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int p_inodo) {
+    int oldest_index = 0;
+    struct timeval curr_timeval = UltimasEntradas[0].ultima_consulta;
+    for (int i = 1; i < CACHE_SIZE; i++) {
+        if (UltimasEntradas[i].ultima_consulta.tv_sec < curr_timeval.tv_sec || (UltimasEntradas[i].ultima_consulta.tv_sec == curr_timeval.tv_sec && UltimasEntradas[i].ultima_consulta.tv_usec < curr_timeval.tv_usec)) {
+            oldest_index = i;
+            curr_timeval = UltimasEntradas[i].ultima_consulta;
+        }
+    }
+    strcpy(UltimasEntradas[oldest_index].camino, camino);
+    UltimasEntradas[oldest_index].p_inodo = p_inodo;
+    if (gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> escribir_cache_lru() -> gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO" RESET);
+        return FALLO;
+    }
+    return EXITO;
 }
