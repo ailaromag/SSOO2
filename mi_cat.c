@@ -22,18 +22,31 @@ int main(int argc, char** argv) {
         return FALLO;
     }
     unsigned char buffer_texto[TAMBUFFER];
-    int error = mi_read(ruta_fichero, buffer_texto, 0, TAMBUFFER);
-    if (error == FALLO) {
-        fprintf(stderr, RED "Error: mi_cat.c -> main() -> mi_read() == FALLO\n" RESET);
-        return FALLO;
-    } else if (error < 0) {
-        mostrar_error_buscar_entrada(error);
-        return FALLO;
+    unsigned int offset = 0;
+    int leidos = TAMBUFFER;
+    int total_leidos = 0;
+
+    while (leidos > 0) {
+        memset(buffer_texto, 0, TAMBUFFER);
+        leidos = mi_read(ruta_fichero, buffer_texto, offset, TAMBUFFER);
+        if (leidos == FALLO) {
+            fprintf(stderr, RED "Error: mi_cat.c -> main() -> mi_read() == FALLO\n" RESET);
+            return FALLO;
+        } else if (leidos < 0) {
+            mostrar_error_buscar_entrada(leidos);
+            return FALLO;
+        }
+
+        if (leidos > 0) {
+            fflush(stdout);
+            write(1, buffer_texto, leidos);
+            printf("\n");
+            total_leidos += leidos;
+            offset += TAMBUFFER;
+        }
     }
 
-    printf("Total_leidos: %d", error);
-
-    printf("%s", buffer_texto);
+    printf("Total_leidos: %d", total_leidos);
 
     if (bumount(disco) == FALLO) {
         fprintf(stderr, RED "Error: mi_cat.c -> main() -> bumount() == FALLO\n" RESET);
