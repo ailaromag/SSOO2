@@ -3,9 +3,6 @@
 #define DEBUG_BUSCAR_ENTRADA false
 #define DEBUG_MI_WRITE true
 #define DEBUG_MI_READ true
-// =======
-// #define DEBUG_BUSCAR_ENTRADA false
-// >>>>>>> d9edd3f560facaef2121a39d30487480d2f3b593
 
 // Dada una cadena de caracteres *camino (que comience por '/'), separa su contenido en dos: *inicial y *final
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
@@ -460,63 +457,84 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
     strcpy(UltimasEntradas[oldest_index].camino, camino);
     UltimasEntradas[oldest_index].p_inodo = p_inodo;
     if (gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO) {
-        fprintf(stderr, RED "Error: directorios.c -> escribir_cache_lru() -> gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO" RESET);
+        fprintf(stderr, RED "Error: directorios.c -> escribir_cache_lru() -> gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;
 }
-// =======
 
-// int mi_write(const char *camino, const char *buf, unsigned int offset, unsigned int nbytes){
+int mi_link(const char *camino1, const char *camino2) {
+    // Leermos el superbloque para obtener la posición del inodo raiz 
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> bread(posSB, &sb) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // Buscamos la entrada del camino1 para ver si existe
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_entrada;
+    unsigned int p_inodo;
+    int error = buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4);
+    if (error == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4) == FALLO\n" RESET);
+        return FALLO;
+    } else if (error < 0) {
+        return error;
+    }
+    // Checkeamos de que camino1 es un fichero
+    struct STAT stat;
+    if (mi_stat_f(p_inodo, &stat) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
+        return FALLO;
+    }
+    
+    if (stat.tipo != 'f') {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> if (stat.tipo != 'f') == FALLO\n" RESET);
+        return FALLO;
+    }
 
-//     struct superbloque sb;
-//     if (bread(posSB, &sb) == FALLO) {
-//         fprintf(stderr, RED "Error: directorios.c -> mi_write() -> bread(posSB, &sb) == FALLO" RESET);
-//         return FALLO;
-//     }
-//     unsigned int p_inodo_dir = sb.posInodoRaiz;
-//     unsigned int p_inodo;
-//     unsigned int p_entrada;
+    if ((stat.permisos & 4) != 4) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> if ((stat.permisos & 4) != 4)\n" RESET);
+        return FALLO;
+    }
 
-//     // Buscar la entrada para obtener el inodo
-//     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0,6);
-//     if (error < 0) {
-//         fprintf(stderr, RED "Error: directorios.c -> mi_write() -> buscar_entrada() == FALLO" RESET);
-//         return error;
-//     }
-
-//     int bytes_escritos = mi_write_f(p_inodo, buf, offset, nbytes);
-//     if (bytes_escritos < 0) {
-//         fprintf(stderr, RED "Error: directorios.c -> mi_write() -> mi_write_f()== FALLO" RESET);
-//         return bytes_escritos; // Devuelve el código de error de mi_write_f
-//     }
-
-//     return bytes_escritos; // Retorna la cantidad de bytes escritos
-// }
-
-// int mi_read(const char *camino, char *buf, unsigned int offset, unsigned int nbytes){
-
-// struct superbloque sb;
-// if (bread(posSB, &sb) == FALLO) {
-//     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> bread(posSB, &sb) == FALLO" RESET);
-//     return FALLO;
-// }
-// // Variables para búsqueda
-// unsigned int p_inodo_dir = sb.posInodoRaiz;
-// unsigned int p_inodo, p_entrada;
-
-// // Buscar la entrada para obtener el inodo del fichero
-// if (buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 6) < 0) {
-//     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> buscar_entrada() == FALLO" RESET);
-//     return FALLO;
-// }
-// // Llamar a la función de la capa de ficheros para leer los datos
-// int bytes_leidos = mi_read_f(p_inodo, buf, offset, nbytes);
-// if (bytes_leidos < 0) {
-//     fprintf(stderr, RED "Error: directorios.c -> mi_read() -> mi_write_f()== FALLO" RESET);
-//     return FALLO;
-// }
-
-// return bytes_leidos; // Retornar cantidad de bytes leídos
-// }
-// >>>>>>> d9edd3f560facaef2121a39d30487480d2f3b593
+    // Creamos la entrada del camino2
+    unsigned int p_inodo_previo = p_inodo;
+    p_inodo_dir = sb.posInodoRaiz;
+    error = buscar_entrada(camino2, &p_inodo_dir, &p_inodo, &p_entrada, 1, 6);
+    if (error == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> buscar_entrada(camino2, &p_inodo_dir, &p_inodo, &p_entrada, 1, 6) == FALLO\n" RESET);
+        return FALLO;
+    } else if (error < 0) {
+        return error;
+    }
+    // Borramos el inodo del camino 2
+    if (liberar_inodo(p_inodo) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> liberar_inodo(p_inodo) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // Cambiamos el num inodo en la nueva entrada
+    struct entrada entrada;
+    if (mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
+        return FALLO;
+    }
+    entrada.ninodo = p_inodo_previo;
+    if (mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // Incrementamos la cantidad de nlinks y actualizamos ctime
+    struct inodo inodo;
+    if (leer_inodo(p_inodo_previo, &inodo) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> leer_inodo(p_inodo_previo, &inodo) == FALLO\n" RESET);
+        return FALLO;
+    }
+    inodo.nlinks++;
+    inodo.ctime = time(NULL);
+    if (escribir_inodo(p_inodo_previo, &inodo) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_link() -> escribir_inodo(p_inodo_previo, &inodo) == FALLO\n" RESET);
+        return FALLO;
+    }
+    return EXITO;
+}

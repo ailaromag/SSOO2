@@ -44,7 +44,4 @@ int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned 
 int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nbytes);
 int leer_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int *p_inodo, bool *found);
 int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int p_inodo);
-// =======
-// int mi_write(const char *camino, const char *buf, unsigned int offset, unsigned int nbytes);
-// int mi_read(const char *camino, char *buf, unsigned int offset, unsigned int nbytes);
-// >>>>>>> d9edd3f560facaef2121a39d30487480d2f3b593
+int mi_link(const char *camino1, const char *camino2);
