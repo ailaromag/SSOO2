@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     // deslinkeamos el fichero
     error = mi_unlink(ruta);
     if (error == FALLO) {
-        fprintf(stderr, RED "Error: mi_rm.c -> main() -> mi_unlink() == FALLO\n" RESET);
+        // fprintf(stderr, RED "Error: mi_rm.c -> main() -> mi_unlink() == FALLO\n" RESET);
         return FALLO;
     } else if (error < 0) {
         mostrar_error_buscar_entrada(error);

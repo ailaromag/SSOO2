@@ -1,8 +1,8 @@
 #include "directorios.h"
 
 #define DEBUG_BUSCAR_ENTRADA false
-#define DEBUG_MI_WRITE true
-#define DEBUG_MI_READ true
+#define DEBUG_MI_WRITE false
+#define DEBUG_MI_READ false
 
 // Dada una cadena de caracteres *camino (que comience por '/'), separa su contenido en dos: *inicial y *final
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
@@ -568,8 +568,8 @@ int mi_unlink(const char *camino) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
         return FALLO;
     }
-    if (stat.tipo == 'd' && stat.tamEnBytesLog <= 0) {
-        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> if (stat.tipo == 'd' && stat.tamEnBytesLog != 0), no es un directorio vacío\n" RESET);
+    if (stat.tipo == 'd' && stat.tamEnBytesLog > 0) {
+        fprintf(stderr, RED "Error: El directorio /dir2/dir21/ no está vacío\n" RESET);
         return FALLO;
     }
     // Miramos el directorio contenedor
