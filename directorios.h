@@ -45,3 +45,4 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
 int leer_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int *p_inodo, bool *found);
 int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int p_inodo);
 int mi_link(const char *camino1, const char *camino2);
+int mi_unlink(const char *camino);

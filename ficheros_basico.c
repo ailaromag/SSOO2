@@ -1,6 +1,7 @@
 #include "ficheros_basico.h"
 
 #define DEBUG_TRADUCIR_BLOQUE_INODO false
+#define DEBUG_LIBERAR_BLOQUES_INODO false
 
 /**
  * Calcula el tamaño en bloques necesario para el mapa de bits.
@@ -653,9 +654,10 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
+#if DEBUG_LIBERAR_BLOQUES_INODO
     // Debugging initial message
     printf(BLUE NEGRITA "[liberar_bloques_inodo()→ primer BL: %d, último BL: %d]\n" RESET, primerBL, ultimoBL);
-
+#endif
     // Iteramos sobre los bloques lógicos
     for (nBL = primerBL; nBL <= ultimoBL; nBL++) {
         nRangoBL = obtener_nRangoBL(inodo, nBL, &ptr);  // 0: Directo, 1: I0, 2: I1, 3: I2
@@ -685,7 +687,9 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                 return FALLO;
             }
             liberados++;
+#if DEBUG_LIBERAR_BLOQUES_INODO
             printf(GRAY "[liberar_bloques_inodo() -> liberado BF %d de datos para BL %d]\n" RESET, ptr, nBL);
+#endif
             // Si estamos en el nivel 0 de inodo
             if (nRangoBL == 0) {
                 inodo->punterosDirectos[nBL] = 0;
@@ -703,9 +707,10 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO" RESET);
                             return FALLO;
                         }
+#if DEBUG_LIBERAR_BLOQUES_INODO
                         printf(GRAY "[liberar_bloques_inodo() -> liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
                         liberados++;
-
+#endif
                         // Mejora 1: Saltar los BLs restantes que no se requiera explorar
                         nBLPrevio = nBL;
                         if (nivel_punteros == 1) {
@@ -720,8 +725,9 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                         }
 
                         if (nBL > ultimoBL) nBL = ultimoBL;  // No pasarse del último bloque
+#if DEBUG_LIBERAR_BLOQUES_INODO
                         printf(MAGENTA "[liberar_bloques_inodo() -> Saltamos del BL %d saltamos hasta BL %d]\n" RESET, nBLPrevio, nBL);
-
+#endif
                         // Borramos el puntero indirecto del inodo
                         if (nivel_punteros == nRangoBL) {
                             inodo->punterosIndirectos[nRangoBL - 1] = 0;
@@ -733,7 +739,9 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                             perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bwrite() == FALLO" RESET);
                             return FALLO;
                         }
+#if DEBUG_LIBERAR_BLOQUES_INODO
                         printf(ORANGE "[liberar_bloques_inodo() -> salvado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
+#endif
                         total_bwrites++;
                         nivel_punteros = nRangoBL + 1;
                     }
@@ -757,14 +765,18 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     bloquesRestantes = (NPUNTEROS * NPUNTEROS) + NPUNTEROS * NPUNTEROS * (NPUNTEROS - (indice_actual + 1));
                     nBL += bloquesRestantes;
                 }
-                // printf(BLUE "[liberar_bloques_inodo() -> BL %d no existe, saltamos %d bloques hasta BL %d]\n" RESET, nBL - bloquesRestantes, bloquesRestantes, nBL);
+#if DEBUG_LIBERAR_BLOQUES_INODO
+                printf(BLUE "[liberar_bloques_inodo() -> BL %d no existe, saltamos %d bloques hasta BL %d]\n" RESET, nBL - bloquesRestantes, bloquesRestantes, nBL);
+#endif
             }
         }
     }
     // Actualizar el número de bloques ocupados en el inodo
     inodo->numBloquesOcupados -= liberados;
-    // Final summary
+// Final summary
+#if DEBUG_LIBERAR_BLOQUES_INODO
     printf(BLUE NEGRITA "[liberar_bloques_inodo()→ total bloques liberados: %d, total_breads: %d, total_bwrites: %d]\n" RESET, liberados, total_breads, total_bwrites);
+#endif
     return liberados;
 }
 

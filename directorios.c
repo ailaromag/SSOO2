@@ -464,7 +464,7 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
 }
 
 int mi_link(const char *camino1, const char *camino2) {
-    // Leermos el superbloque para obtener la posición del inodo raiz 
+    // Leermos el superbloque para obtener la posición del inodo raiz
     struct superbloque sb;
     if (bread(posSB, &sb) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> bread(posSB, &sb) == FALLO\n" RESET);
@@ -487,7 +487,7 @@ int mi_link(const char *camino1, const char *camino2) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
         return FALLO;
     }
-    
+
     if (stat.tipo != 'f') {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> if (stat.tipo != 'f') == FALLO\n" RESET);
         return FALLO;
@@ -515,12 +515,12 @@ int mi_link(const char *camino1, const char *camino2) {
     }
     // Cambiamos el num inodo en la nueva entrada
     struct entrada entrada;
-    if (mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO) {
+    if (mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
         return FALLO;
     }
     entrada.ninodo = p_inodo_previo;
-    if (mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO) {
+    if (mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
         return FALLO;
     }
@@ -535,6 +535,85 @@ int mi_link(const char *camino1, const char *camino2) {
     if (escribir_inodo(p_inodo_previo, &inodo) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> escribir_inodo(p_inodo_previo, &inodo) == FALLO\n" RESET);
         return FALLO;
+    }
+    return EXITO;
+}
+
+int mi_unlink(const char *camino) {
+    // No puede borrar directorio raiz
+    if (strcmp(camino, "/") == 0) {
+        fprintf(stderr, "Error: no se puede eliminar el inodo raiz '/'");
+        return FALLO;
+    }
+    // Leermos el superbloque para obtener la posición del inodo raiz
+    struct superbloque sb;
+    if (bread(posSB, &sb) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> bread(posSB, &sb) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // Buscamos la entrada del camino para ver si existe
+    unsigned int p_inodo_dir = sb.posInodoRaiz;
+    unsigned int p_entrada;
+    unsigned int p_inodo;
+    int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4);
+    if (error == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4) == FALLO\n" RESET);
+        return FALLO;
+    } else if (error < 0) {
+        return error;
+    }
+    // Si es un directorio miramos de que esté vacío
+    struct STAT stat;
+    if (mi_stat_f(p_inodo, &stat) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
+        return FALLO;
+    }
+    if (stat.tipo == 'd' && stat.tamEnBytesLog <= 0) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> if (stat.tipo == 'd' && stat.tamEnBytesLog != 0), no es un directorio vacío\n" RESET);
+        return FALLO;
+    }
+    // Miramos el directorio contenedor
+    if (mi_stat_f(p_inodo_dir, &stat) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_stat_f(p_inodo_dir, &stat) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // Miramos si es la única entrada
+    int p_ultima_entrada = (stat.tamEnBytesLog / sizeof(struct entrada)) - 1;
+    if (p_ultima_entrada > p_entrada) {
+        // si no es la única entrada eliminamos la entrada p_inodo poniendo la última entrada en su posición para evitar huecos
+        struct entrada ultima_entrada;
+        if (mi_read_f(p_inodo_dir, &ultima_entrada, p_ultima_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_read_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
+            return FALLO;
+        }
+        if (mi_write_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_write_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
+            return FALLO;
+        }
+    }
+    if (mi_truncar_f(p_inodo_dir, p_ultima_entrada * sizeof(struct entrada)) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_truncar_f(p_inodo_dir, 0) == FALLO\n" RESET);
+        return FALLO;
+    }
+    // decrementamos nlinks de p_inodo
+    struct inodo inodo;
+    if (leer_inodo(p_inodo, &inodo) == FALLO) {
+        fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> leer_inodo(p_inodo, &inodo) == FALLO\n" RESET);
+        return FALLO;
+    }
+    inodo.nlinks--;
+    // miramos si queda nlinks
+    if (inodo.nlinks <= 0) {
+        if (liberar_inodo(p_inodo) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> liberar_inodo(p_inodo) == FALLO\n" RESET);
+            return FALLO;
+        }
+    } else {
+        inodo.ctime = time(NULL);
+        if (escribir_inodo(p_inodo, &inodo) == FALLO) {
+            fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> escribir_inodo(p_inodo, &inodo) == FALLO\n" RESET);
+            return FALLO;
+        }
     }
     return EXITO;
 }
