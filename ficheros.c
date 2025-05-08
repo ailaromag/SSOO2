@@ -11,7 +11,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     if ((inodo.permisos & 0b00000010) != 0b00000010) {
         // perror(RED "Error: ficheros.c -> mi_write_f() -> inodo.permisos & 0b00000010 != 0b00000010");
         // printf(RESET);
-        printf(BLUE "No hay permiso de escritura\n" RESET);
+        printf(RED "No hay permiso de escritura\n" RESET);
         return FALLO;
     }
     int primerBL = offset / BLOCKSIZE;

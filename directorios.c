@@ -4,6 +4,13 @@
 #define DEBUG_MI_WRITE false
 #define DEBUG_MI_READ false
 
+// tabla caché directorios
+#if (USARCACHE == 2 || USARCACHE == 3)
+#define CACHE_SIZE 3  // cantidad de entradas para la caché
+static struct UltimaEntrada UltimasEntradasEscritura[CACHE_SIZE];
+static struct UltimaEntrada UltimasEntradasLectura[CACHE_SIZE];
+#endif
+
 // Dada una cadena de caracteres *camino (que comience por '/'), separa su contenido en dos: *inicial y *final
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
     if (camino == NULL || camino[0] != '/') {

@@ -26,12 +26,7 @@ struct UltimaEntrada {
     struct timeval ultima_consulta;
 #endif
 };
-// tabla caché directorios
-#if (USARCACHE == 2 || USARCACHE == 3)
-#define CACHE_SIZE 3  // cantidad de entradas para la caché
-static struct UltimaEntrada UltimasEntradasEscritura[CACHE_SIZE];
-static struct UltimaEntrada UltimasEntradasLectura[CACHE_SIZE];
-#endif
+
 
 int extraer_camino(const char *camino, char *inicial, char *final, char *tipo);
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos);

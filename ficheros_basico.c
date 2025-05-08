@@ -642,8 +642,10 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
     int total_breads = 0;
     int total_bwrites = 0;
 
+#if DEBUG_LIBERAR_BLOQUES_INODO
     // Variables para rastrear saltos de mejora 1
     int nBLPrevio;
+#endif
 
     memset(bufAux_punteros, 0, BLOCKSIZE);
 
@@ -709,10 +711,12 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                         }
 #if DEBUG_LIBERAR_BLOQUES_INODO
                         printf(GRAY "[liberar_bloques_inodo() -> liberado BF %d de punteros_nivel%d correspondiente al BL %d]\n" RESET, ptr, nivel_punteros, nBL);
-                        liberados++;
 #endif
+                        liberados++;
                         // Mejora 1: Saltar los BLs restantes que no se requiera explorar
+#if DEBUG_LIBERAR_BLOQUES_INODO
                         nBLPrevio = nBL;
+#endif
                         if (nivel_punteros == 1) {
                             // Para nivel 1, saltamos al final de este bloque de punteros
                             nBL += NPUNTEROS - (indice + 1);

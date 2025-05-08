@@ -40,13 +40,13 @@ int main(int argc, char** argv) {
         if (leidos > 0) {
             fflush(stdout);
             write(1, buffer_texto, leidos);
-            printf("\n");
+            // printf("\n");   // it's used for lvl 9 test
             total_leidos += leidos;
             offset += TAMBUFFER;
         }
     }
 
-    printf("Total_leidos: %d", total_leidos);
+    fprintf(stderr, "\nTotal_leidos: %d\n", total_leidos);  // it's uses fprintf because when we execute "./mi_cat disco /ruta > output.txt" it doesn't go into output.txt
 
     if (bumount(disco) == FALLO) {
         fprintf(stderr, RED "Error: mi_cat.c -> main() -> bumount() == FALLO\n" RESET);
