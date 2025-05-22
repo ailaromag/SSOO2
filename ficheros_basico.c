@@ -1,7 +1,7 @@
 #include "ficheros_basico.h"
 
 #define DEBUG_TRADUCIR_BLOQUE_INODO false
-#define DEBUG_LIBERAR_BLOQUES_INODO false
+#define DEBUG_LIBERAR_BLOQUES_INODO true
 
 /**
  * Calcula el tamaño en bloques necesario para el mapa de bits.

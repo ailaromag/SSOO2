@@ -244,6 +244,7 @@ int mi_dir(const char *camino, char *buffer, char tipo, char flag) {
         unsigned int offset = 0;
         nentrada = inodo_stat.tamEnBytesLog / sizeof(struct entrada);
         entradas = malloc(nentrada * sizeof(struct entrada));
+        // TODO: buffer
         for (int i = 0; i < nentrada; i++) {
             mi_read_f(p_inodo, &entradas[i], offset, sizeof(struct entrada));
             offset += sizeof(struct entrada);
@@ -357,7 +358,8 @@ int mi_stat(const char *camino, struct STAT *p_stat) {
 int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned int nbytes) {
     unsigned int p_inodo;
     bool found;
-    if (leer_cache_lru(UltimasEntradasEscritura, camino, &p_inodo, &found) == FALLO) {
+    int read_index = leer_cache_lru(UltimasEntradasEscritura, camino, &p_inodo, &found);
+    if (read_index == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_write() -> leer_cache_lru(UltimasEntradasEscritura, camino, p_inodo, &found) == FALLO" RESET);
         return FALLO;
     }
@@ -375,16 +377,17 @@ int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned 
             return error;
         }
         // Actualizamos el cache
-        if (escribir_cache_lru(UltimasEntradasEscritura, camino, p_inodo) == FALLO) {
+        int written_index = escribir_cache_lru(UltimasEntradasEscritura, camino, p_inodo);
+        if (written_index == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> mi_write() -> escribir_cache_lru(UltimasEntradasEscritura, camino, p_inodo) == FALLO" RESET);
             return FALLO;
         }
 #if DEBUG_MI_WRITE
-        printf(ORANGE "[mi_write() -> Actualizamos la caché de escritura]\n" RESET);
+        printf(ORANGE "[mi_write() -> Reemplazamos cache[%d]: %s]\n" RESET, written_index, camino);
 #endif
     } else {
 #if DEBUG_MI_READ
-        printf(BLUE "[mi_write() -> Utilizamos la caché de escritura en vez de llamar a buscar_entrada()]\n" RESET);
+        printf(BLUE "[mi_write() -> Utilizamos cache[%d]: %s]\n" RESET, read_index, camino);
 #endif
     }
     int bytes_written = mi_write_f(p_inodo, buf, offset, nbytes);
@@ -438,6 +441,7 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
 
 int leer_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int *p_inodo, bool *found) {
     *found = false;
+    int found_index;
     for (int i = 0; i < CACHE_SIZE && *found == false; i++) {
         if (strcmp(UltimasEntradas[i].camino, camino) == 0) {
             // actualizamos el tiempo de consulta
@@ -447,9 +451,10 @@ int leer_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, un
             }
             *p_inodo = UltimasEntradas[i].p_inodo;
             *found = true;
+            found_index = i;
         }
     }
-    return EXITO;
+    return found_index;
 }
 
 int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino, unsigned int p_inodo) {
@@ -467,7 +472,7 @@ int escribir_cache_lru(struct UltimaEntrada *UltimasEntradas, const char *camino
         fprintf(stderr, RED "Error: directorios.c -> escribir_cache_lru() -> gettimeofday(&UltimasEntradas[oldest_index].ultima_consulta, NULL) == FALLO\n" RESET);
         return FALLO;
     }
-    return EXITO;
+    return oldest_index;
 }
 
 int mi_link(const char *camino1, const char *camino2) {
