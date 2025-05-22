@@ -240,15 +240,10 @@ int mi_dir(const char *camino, char *buffer, char tipo, char flag) {
         memcpy(entradas, &entrada_fichero, sizeof(struct entrada));
         nentrada = 1;
     } else if (tipo == 'd') {
-        // Caso directorio
-        unsigned int offset = 0;
+        // Caso directorio, versión buffer
         nentrada = inodo_stat.tamEnBytesLog / sizeof(struct entrada);
         entradas = malloc(nentrada * sizeof(struct entrada));
-        // TODO: buffer
-        for (int i = 0; i < nentrada; i++) {
-            mi_read_f(p_inodo, &entradas[i], offset, sizeof(struct entrada));
-            offset += sizeof(struct entrada);
-        }
+        mi_read_f(p_inodo, entradas, 0, nentrada * sizeof(struct entrada));
     } else {
         fprintf(stderr, RED "Error: directorios.c -> mi_dir() -> if (tipo != 'd' && tipo != 'f'), tiene que ser un fichero o directorio");
         return FALLO;
