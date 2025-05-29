@@ -1,4 +1,7 @@
 #include <semaphore.h>
+#include <fcntl.h>       // For O_CREAT
+#include <sys/stat.h>    // For S_IRWXU
+#include <stddef.h>      // For NULL
 
 #define SEM_NAME "/mymutex"
 #define SEM_INIT_VALUE 1

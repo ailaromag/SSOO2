@@ -9,6 +9,10 @@ static int descriptor = 0;
 
 // Montar el fichero
 int bmount(const char *camino) {
+    if (descriptor > 0) {
+        close(descriptor);
+    }
+
     if (!mutex) {  // el semáforo es único en el sistema y sólo se ha de inicializar 1 vez (padre)
         mutex = initSem();
         if (mutex == SEM_FAILED) {
@@ -30,7 +34,8 @@ int bmount(const char *camino) {
 // Hace un close del archivo
 int bumount() {
     deleteSem();
-    if (close(descriptor) == FALLO) {
+    descriptor = close(descriptor);
+    if (descriptor == FALLO) {
         perror(RED "Error: bloques.c -> bumount -> close() == FALLO");
         printf(RESET);
         return FALLO;
