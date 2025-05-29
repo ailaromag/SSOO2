@@ -3,15 +3,21 @@
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes) {
     int nBytesEscritos = 0;
     struct inodo inodo;
+
+    // Sección crítica
+    mi_waitSem();
+
     if (leer_inodo(ninodo, &inodo) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> leer_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
     if ((inodo.permisos & 0b00000010) != 0b00000010) {
         // perror(RED "Error: ficheros.c -> mi_write_f() -> inodo.permisos & 0b00000010 != 0b00000010");
         // printf(RESET);
         printf(RED "No hay permiso de escritura\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     int primerBL = offset / BLOCKSIZE;
@@ -24,6 +30,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     if (nbfisico == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> traducir_bloque_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
     // Leemos el bloque antes de escribir para preservar el valor de los bytes no escritos
@@ -31,6 +38,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     if (bread(nbfisico, buf_bloque) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> bread() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
     if (primerBL == ultimoBL) {
@@ -39,6 +47,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         if (bwrite(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> if (primerBL == ultimoBL) -> bwrite() == FALLO");
             printf(RESET);
+            mi_signalSem();
             return FALLO;
         }
         nBytesEscritos += nbytes;
@@ -49,6 +58,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         if (bwrite(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> if (primerBL == ultimoBL) else -> bwrite() == FALLO");
             printf(RESET);
+            mi_signalSem();
             return FALLO;
         }
         nBytesEscritos += bytesEscritura;
@@ -58,12 +68,14 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             if (nbfisico == FALLO) {
                 perror(RED "Error: ficheros.c -> mi_write_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> traducir_bloque_inodo() == FALLO");
                 printf(RESET);
+                mi_signalSem();
                 return FALLO;
             }
             memcpy(buf_bloque, buf_original + nBytesEscritos, BLOCKSIZE);
             if (bwrite(nbfisico, buf_bloque) == FALLO) {
                 perror(RED "Error: ficheros.c -> mi_write_f() -> for (int actualBL = primerBL + 1; actualBL < (ultimoBL - 1); actualBL++) -> bwrite() == FALLO");
                 printf(RESET);
+                mi_signalSem();
                 return FALLO;
             }
             nBytesEscritos += bytesEscritura;
@@ -72,17 +84,20 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         if (nbfisico == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> nbfisico = traducir_bloque_inodo() == FALLO");
             printf(RESET);
+            mi_signalSem();
             return FALLO;
         }
         if (bread(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> bread() == FALLO");
             printf(RESET);
+            mi_signalSem();
             return FALLO;
         }
         memcpy(buf_bloque, buf_original + nBytesEscritos, desp2 + 1);
         if (bwrite(nbfisico, buf_bloque) == FALLO) {
             perror(RED "Error: ficheros.c -> mi_write_f() -> bwrite() == FALLO");
             printf(RESET);
+            mi_signalSem();
             return FALLO;
         }
         // nBytesEscritos += bytesEscritura;
@@ -91,6 +106,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     if (leer_inodo(ninodo, &inodo) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> leer_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
     time_t tiempoModificacion = time(NULL);
@@ -103,8 +119,13 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     if (escribir_inodo(ninodo, &inodo) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_write_f() -> escribir_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
+
+    // Fin de la sección crítica
+    mi_signalSem();
+    
     return nBytesEscritos;
 }
 
@@ -184,11 +205,18 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         nBytesLeidos += desp2 + 1;
     }
 
+    // Comienzo sección crítica
+    mi_signalSem();
+
     // Actualizar atime
     inodo.atime = time(NULL);
     if (escribir_inodo(ninodo, &inodo) == FALLO) {
+        mi_signalSem();
         return FALLO;
     }
+
+    // Fin sección crítica
+    mi_signalSem();
 
     return nBytesLeidos;
 }
@@ -213,16 +241,24 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat) {
 }
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos) {
     struct inodo inodo;
+    // Inicio sección crítica
+    mi_waitSem();
+
     if (leer_inodo(ninodo, &inodo) == FALLO) {
         perror(RED "Error: ficheros.c -> mi_chmod_f() -> leer_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
     inodo.permisos = permisos;
     if (escribir_inodo(ninodo, &inodo)) {
         perror(RED "Error: ficheros.c -> mi_chmod_f() -> escribir_inodo() == FALLO");
         printf(RESET);
+        mi_signalSem();
         return FALLO;
     }
+
+    // Fin sección crítica
+    mi_signalSem();
     return EXITO;
 }

@@ -1,9 +1,21 @@
 #include "bloques.h"
 
+#include "semaforo_mutex_posix.h"
+
+static sem_t *mutex;
+static unsigned int inside_sc = 0;
+
 static int descriptor = 0;
 
 // Montar el fichero
 int bmount(const char *camino) {
+    if (!mutex) {  // el semáforo es único en el sistema y sólo se ha de inicializar 1 vez (padre)
+        mutex = initSem();
+        if (mutex == SEM_FAILED) {
+            return -1;
+        }
+    }
+
     if ((descriptor = open(camino, O_RDWR | O_CREAT, 0666)) == FALLO)  // Abrimos el fichero y controlamos que no se produzcan errores
     {
         perror(RED "Error: bloques.c -> bmount() -> open() == FALLO");
@@ -17,6 +29,7 @@ int bmount(const char *camino) {
 
 // Hace un close del archivo
 int bumount() {
+    deleteSem();
     if (close(descriptor) == FALLO) {
         perror(RED "Error: bloques.c -> bumount -> close() == FALLO");
         printf(RESET);
@@ -58,4 +71,19 @@ int bread(unsigned int nbloque, void *buf) {
         return FALLO;
     }
     return bytesLeidos;
+}
+
+void mi_waitSem() {
+   if (!inside_sc) { // inside_sc==0, no se ha hecho ya un wait
+       waitSem(mutex);
+   }
+   inside_sc++;
+}
+
+
+void mi_signalSem() {
+   inside_sc--;
+   if (!inside_sc) {
+       signalSem(mutex);
+   }
 }

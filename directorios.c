@@ -481,27 +481,36 @@ int mi_link(const char *camino1, const char *camino2) {
     unsigned int p_inodo_dir = sb.posInodoRaiz;
     unsigned int p_entrada;
     unsigned int p_inodo;
+
+    // Sección crítica
+    mi_waitSem();
+
     int error = buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4);
     if (error == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     } else if (error < 0) {
+        mi_signalSem();
         return error;
     }
     // Checkeamos de que camino1 es un fichero
     struct STAT stat;
     if (mi_stat_f(p_inodo, &stat) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
 
     if (stat.tipo != 'f') {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> if (stat.tipo != 'f') == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
 
     if ((stat.permisos & 4) != 4) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> if ((stat.permisos & 4) != 4)\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
 
@@ -511,38 +520,49 @@ int mi_link(const char *camino1, const char *camino2) {
     error = buscar_entrada(camino2, &p_inodo_dir, &p_inodo, &p_entrada, 1, 6);
     if (error == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> buscar_entrada(camino2, &p_inodo_dir, &p_inodo, &p_entrada, 1, 6) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     } else if (error < 0) {
+        mi_signalSem();
         return error;
     }
     // Borramos el inodo del camino 2
     if (liberar_inodo(p_inodo) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> liberar_inodo(p_inodo) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     // Cambiamos el num inodo en la nueva entrada
     struct entrada entrada;
     if (mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_read_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     entrada.ninodo = p_inodo_previo;
     if (mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof (struct entrada), sizeof(struct entrada)) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     // Incrementamos la cantidad de nlinks y actualizamos ctime
     struct inodo inodo;
     if (leer_inodo(p_inodo_previo, &inodo) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> leer_inodo(p_inodo_previo, &inodo) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     inodo.nlinks++;
     inodo.ctime = time(NULL);
     if (escribir_inodo(p_inodo_previo, &inodo) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_link() -> escribir_inodo(p_inodo_previo, &inodo) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
+
+    // Fin de sección crítica
+    mi_signalSem();
+
     return EXITO;
 }
 
@@ -562,26 +582,35 @@ int mi_unlink(const char *camino) {
     unsigned int p_inodo_dir = sb.posInodoRaiz;
     unsigned int p_entrada;
     unsigned int p_inodo;
+
+    // Comienzo sección crítica
+    mi_waitSem();
+
     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4);
     if (error == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> buscar_entrada(camino1, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     } else if (error < 0) {
+        mi_signalSem();
         return error;
     }
     // Si es un directorio miramos de que esté vacío
     struct STAT stat;
     if (mi_stat_f(p_inodo, &stat) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_stat_f(p_inodo, &stat) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     if (stat.tipo == 'd' && stat.tamEnBytesLog > 0) {
         fprintf(stderr, RED "Error: El directorio /dir2/dir21/ no está vacío\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     // Miramos el directorio contenedor
     if (mi_stat_f(p_inodo_dir, &stat) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_stat_f(p_inodo_dir, &stat) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     // Miramos si es la única entrada
@@ -591,21 +620,25 @@ int mi_unlink(const char *camino) {
         struct entrada ultima_entrada;
         if (mi_read_f(p_inodo_dir, &ultima_entrada, p_ultima_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_read_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
+            mi_signalSem();
             return FALLO;
         }
         if (mi_write_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof(struct entrada), sizeof(struct entrada)) == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_write_f(p_inodo_dir, &ultima_entrada, p_entrada * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
+            mi_signalSem();
             return FALLO;
         }
     }
     if (mi_truncar_f(p_inodo_dir, p_ultima_entrada * sizeof(struct entrada)) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> mi_truncar_f(p_inodo_dir, 0) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     // decrementamos nlinks de p_inodo
     struct inodo inodo;
     if (leer_inodo(p_inodo, &inodo) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> leer_inodo(p_inodo, &inodo) == FALLO\n" RESET);
+        mi_signalSem();
         return FALLO;
     }
     inodo.nlinks--;
@@ -613,14 +646,20 @@ int mi_unlink(const char *camino) {
     if (inodo.nlinks <= 0) {
         if (liberar_inodo(p_inodo) == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> liberar_inodo(p_inodo) == FALLO\n" RESET);
+            mi_signalSem();
             return FALLO;
         }
     } else {
         inodo.ctime = time(NULL);
         if (escribir_inodo(p_inodo, &inodo) == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> mi_unlink() -> escribir_inodo(p_inodo, &inodo) == FALLO\n" RESET);
+            mi_signalSem();
             return FALLO;
         }
     }
+
+    // Fin sección crítica
+    mi_signalSem();
+
     return EXITO;
 }
