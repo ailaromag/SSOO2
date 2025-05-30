@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include <signal.h>
 #include <sys/wait.h>
 

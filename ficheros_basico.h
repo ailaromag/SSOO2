@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include <limits.h>
 #include <stdbool.h>
 #include <time.h>

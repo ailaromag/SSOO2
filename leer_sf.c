@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include "directorios.h"
 
 // Flags de depuración para controlar qué tests ejecutar

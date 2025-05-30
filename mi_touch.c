@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include "directorios.h"
 
 bool ends_with_slash_ignore_spaces(const char *str);

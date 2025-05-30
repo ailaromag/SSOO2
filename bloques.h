@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #define BLOQUES_H
 
 // Inclusión de librerías del sistema para funcionalidades básicas

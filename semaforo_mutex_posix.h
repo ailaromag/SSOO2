@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include <semaphore.h>
 #include <fcntl.h>       // For O_CREAT
 #include <sys/stat.h>    // For S_IRWXU

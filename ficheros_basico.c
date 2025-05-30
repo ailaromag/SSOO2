@@ -1,3 +1,10 @@
+/**
+ * Autores:
+ *   - Xiaozhe Cheng
+ *   - Aila Romanguera Mezquida
+ *   - Alba Auilera Cabellos
+ */
+
 #include "ficheros_basico.h"
 
 #define DEBUG_TRADUCIR_BLOQUE_INODO false
