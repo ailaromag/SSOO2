@@ -1,5 +1,6 @@
 #define BLOQUES_H
 
+// Inclusión de librerías del sistema para funcionalidades básicas
 #include <errno.h>     // errno
 #include <fcntl.h>     // O_WRONLY, O_CREAT, O_TRUNC
 #include <stdio.h>     // printf(), fprintf(), stderr, stdout, stdin
@@ -9,11 +10,12 @@
 #include <unistd.h>    // SEEK_SET, read(), write(), open(), close(), lseek()
 #include <ctype.h>
 
-#define BLOCKSIZE 1024  // bytes
-#define EXITO 0         // para gestión errores
-#define FALLO -1        // para gestión errores
+// Definición de constantes del sistema de bloques
+#define BLOCKSIZE 1024  // bytes - Tamaño estándar de bloque para operaciones de E/S
+#define EXITO 0         // para gestión errores - Código de retorno exitoso
+#define FALLO -1        // para gestión errores - Código de retorno de error
 
-// colores
+// Definiciones de colores ANSI para output formateado en terminal
 #define BLACK "\x1B[30m"
 #define RED "\x1b[31m"
 #define GREEN "\x1b[32m"
@@ -27,12 +29,13 @@
 #define LBLUE "\x1B[38;2;53;149;240m"
 #define LGREEN "\x1B[38;2;17;245;120m"
 #define GRAY "\x1B[38;2;176;174;174m"
-#define RESET "\x1b[0m"
-#define NEGRITA "\x1b[1m"
+#define RESET "\x1b[0m"    // Reset color a valores por defecto
+#define NEGRITA "\x1b[1m"  // Activar texto en negrita
 
-int bmount(const char *camino);
-int bumount();
-int bwrite(unsigned int nbloque, const void *buf);
-int bread(unsigned int nbloque, void *buf);
-void mi_waitSem();
-void mi_signalSem();
+// Declaraciones de funciones para manejo del sistema de bloques
+int bmount(const char *camino);                    // Montar dispositivo virtual
+int bumount();                                     // Desmontar dispositivo virtual
+int bwrite(unsigned int nbloque, const void *buf); // Escribir bloque al dispositivo
+int bread(unsigned int nbloque, void *buf);        // Leer bloque del dispositivo
+void mi_waitSem();                                 // Entrar en sección crítica
+void mi_signalSem();                               // Salir de sección crítica
