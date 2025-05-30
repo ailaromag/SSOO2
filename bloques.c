@@ -41,8 +41,7 @@ int bmount(const char *camino) {
     // O_CREAT lo crea si no existe, 0666 son los permisos por defecto (rw-rw-rw-)
     if ((descriptor = open(camino, O_RDWR | O_CREAT, 0666)) == FALLO)  // Abrimos el fichero y controlamos que no se produzcan errores
     {
-        perror(RED "Error: bloques.c -> bmount() -> open() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bmount() -> open() == FALLO\n" RESET);
         return FALLO;
     }
     // Asegurar que el archivo tiene los permisos correctos (lectura/escritura para todos)
@@ -70,8 +69,7 @@ int bumount() {
     // Cerrar el descriptor de archivo y verificar que no hay errores
     descriptor = close(descriptor);
     if (descriptor == FALLO) {
-        perror(RED "Error: bloques.c -> bumount -> close() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bumount -> close() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO; // Desmontaje completado exitosamente
@@ -95,16 +93,14 @@ int bwrite(unsigned int nbloque, const void *buf) {
     // Posicionarse en el bloque específico: nbloque * BLOCKSIZE bytes desde el inicio
     // Esto nos lleva al offset exacto donde comienza el bloque deseado
     if ((lseek(descriptor, nbloque * BLOCKSIZE, SEEK_SET)) == FALLO) {
-        perror(RED "Error: bloques.c -> bwrite() -> lseek() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bwrite() -> lseek() == FALLO\n" RESET);
         return FALLO;
     }
 
     // Escribir exactamente BLOCKSIZE bytes desde el buffer al archivo
     // Esta operación es atómica a nivel de bloque para mantener consistencia
     if ((bytesEscritos = write(descriptor, buf, BLOCKSIZE)) == FALLO) {
-        perror(RED "Error: bloques.c -> bwrite() -> write() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bwrite() -> write() == FALLO\n" RESET);
         return FALLO;
     }
     return bytesEscritos; // Retornar el número de bytes escritos (debería ser BLOCKSIZE)
@@ -128,16 +124,14 @@ int bread(unsigned int nbloque, void *buf) {
     // Posicionarse en el bloque específico que queremos leer
     // El offset se calcula multiplicando el número de bloque por el tamaño del bloque
     if ((lseek(descriptor, nbloque * BLOCKSIZE, SEEK_SET)) == FALLO) {
-        perror(RED "Error: bloques.c -> bread() -> lseek() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bread() -> lseek() == FALLO\n" RESET);
         return FALLO;
     }
 
     // Leer exactamente BLOCKSIZE bytes del archivo al buffer
     // Esta operación garantiza que se lee un bloque completo
     if ((bytesLeidos = read(descriptor, buf, BLOCKSIZE)) == FALLO) {
-        perror(RED "Error: bloques.c -> bread -> read() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: bloques.c -> bread -> read() == FALLO\n" RESET);
         return FALLO;
     }
     return bytesLeidos; // Retornar el número de bytes leídos (debería ser BLOCKSIZE)

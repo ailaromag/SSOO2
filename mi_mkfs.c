@@ -19,8 +19,7 @@
 int main(int argc, char **argv) {
     // Verificar que se proporcionan exactamente 2 argumentos
     if (argc != 3) {
-        perror(RED "Error: mi_mkfs.c -> main() -> argc != 3");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> argc != 3\n" RESET);
         return FALLO;
     }
     
@@ -32,8 +31,7 @@ int main(int argc, char **argv) {
     int descriptor;
     unsigned char buf[BLOCKSIZE];
     if ((descriptor = bmount(camino)) == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> bmount() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> bmount() == FALLO\n" RESET);
         return FALLO;
     }
     
@@ -45,36 +43,31 @@ int main(int argc, char **argv) {
     
     // Inicializar el superbloque con la información básica del sistema
     if (initSB(nbloques, nbloques / 4) == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> initSB() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> initSB() == FALLO\n" RESET);
         return FALLO;
     }
     
     // Inicializar el mapa de bits marcando los bloques de metadatos como ocupados
     if (initMB() == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> initMB() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> initMB() == FALLO\n" RESET);
         return FALLO;
     }
     
     // Inicializar el array de inodos creando la lista enlazada de inodos libres
     if (initAI() == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> initAI() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> initAI() == FALLO\n" RESET);
         return FALLO;
     }
     
     // Reservar el primer inodo para el directorio raíz con permisos completos
     if (reservar_inodo('d', 7) == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> reservar_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> reservar_inodo() == FALLO\n" RESET);
         return FALLO;
     }
     
     // Desmontar el dispositivo virtual una vez completado el formateo
     if (bumount() == FALLO) {
-        perror(RED "Error: mi_mkfs.c -> main() -> bumount() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: mi_mkfs.c -> main() -> bumount() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;

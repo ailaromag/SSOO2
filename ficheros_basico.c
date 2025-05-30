@@ -71,8 +71,7 @@ int initSB(unsigned int nbloques, unsigned int ninodos) {
 
     // Escribir el superbloque en el dispositivo
     if (bwrite(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initSB() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initSB() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;
@@ -93,8 +92,7 @@ int initMB() {
     // Leer el superbloque del sistema
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initMB -> bread()== FALLO\n" RESET);
         return FALLO;
     }
 
@@ -108,8 +106,7 @@ int initMB() {
     for (int i = 0; i < bloquesMB; i++) {
         // Escribir bloques completos con todos los bits a 1
         if (bwrite(posSB + tamSB + i, bufMB) == FALLO) {
-            perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO\n" RESET);
             return FALLO;
         }
     }
@@ -131,16 +128,14 @@ int initMB() {
     }
     // Escribir el último bloque
     if (bwrite(posSB + tamSB + bloquesMB, bufMB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
 
     // Actualizar contador de bloques libres en el superbloque
     SB.cantBloquesLibres -= bloquesMetadatos;
     if (bwrite(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initMB() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;
@@ -163,8 +158,7 @@ int initAI() {
 
     // Leer el superbloque del dispositivo virtual
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initAI() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initAI() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     SB.posPrimerInodoLibre = 0;
@@ -174,8 +168,7 @@ int initAI() {
     for (int i = SB.posPrimerBloqueAI; i <= SB.posUltimoBloqueAI; i++) {  // para cada bloque del AI
         // Leer el bloque de inodos i en el dispositivo virtual
         if (bread(i, inodos) == FALLO) {
-            perror(RED "Error: ficheros_basico.c -> initAI() -> bread() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: ficheros_basico.c -> initAI() -> bread() == FALLO\n" RESET);
             return FALLO;
         }
         for (int j = 0; j < BLOCKSIZE / INODOSIZE; j++) {    // para cada inodo del bloque
@@ -190,8 +183,7 @@ int initAI() {
         }
         // Escribir el bloque de inodos i en el dispositivo virtual
         if (bwrite(i, inodos) == FALLO) {
-            perror(RED "Error: ficheros_basico.c -> initAI() ->  bwrite() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: ficheros_basico.c -> initAI() ->  bwrite() == FALLO\n" RESET);
             return FALLO;
         }
     }
@@ -213,8 +205,7 @@ int initAI() {
 int escribir_bit(unsigned int nbloque, unsigned int bit) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Calcular posición del byte y bit dentro del mapa de bits
@@ -227,8 +218,7 @@ int escribir_bit(unsigned int nbloque, unsigned int bit) {
     posbyte = posbyte % BLOCKSIZE;
     // Leer el bloque físico que contiene el bit
     if (bread(nbloqueabs, &bufferMB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Escribir el bit en el buffer usando máscara
@@ -239,15 +229,13 @@ int escribir_bit(unsigned int nbloque, unsigned int bit) {
     } else if (bit == 0) {
         bufferMB[posbyte] &= ~mascara;
     } else {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bit != 0 ni 1");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bit != 0 ni 1\n" RESET);
         return FALLO;
     }
 
     // Escribir el buffer modificado en el dispositivo virtual
     if (bwrite(nbloqueabs, bufferMB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> initAI -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> initAI -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;
@@ -269,8 +257,7 @@ char leer_bit(unsigned int nbloque) {
     struct superbloque SB;
 
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Calcular posición del byte y bit dentro del mapa de bits
@@ -283,8 +270,7 @@ char leer_bit(unsigned int nbloque) {
     posbyte = posbyte % BLOCKSIZE;
     // Leer el bloque físico
     if (bread(nbloqueabs, &bufferMB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Leer el bit usando máscara
@@ -310,13 +296,11 @@ char leer_bit(unsigned int nbloque) {
 int reservar_bloque() {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     if (SB.cantBloquesLibres <= 0) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> SB.cantBloquesLibres <= 0");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> SB.cantBloquesLibres <= 0\n" RESET);
         return FALLO;
     }
     int nbloqueMB = SB.posPrimerBloqueMB;
@@ -327,8 +311,7 @@ int reservar_bloque() {
     // Localizar el primer bloque del mapa de bits con algún bit libre
     while (!bloqueLibreEncontrado && nbloqueMB <= SB.posUltimoBloqueMB) {
         if (bread(nbloqueMB, bufferMB) == FALLO) {
-            perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bread() == FALLO\n" RESET);
             return FALLO;
         }
         if (memcmp(bufferMB, bufferAux, BLOCKSIZE) != 0) {
@@ -361,15 +344,13 @@ int reservar_bloque() {
     unsigned char bufferCeros[BLOCKSIZE];
     memset(bufferCeros, 0, BLOCKSIZE);
     if (bwrite(nbloque, bufferCeros) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     // Actualizar contador de bloques libres
     SB.cantBloquesLibres--;
     if (bwrite(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_bit() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return nbloque;
@@ -389,21 +370,18 @@ int reservar_bloque() {
 int liberar_bloque(unsigned int nbloque) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloque -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Marcar el bloque como libre en el mapa de bits
     if (escribir_bit(nbloque, 0) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> escribir_bit() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloque -> escribir_bit() == FALLO\n" RESET);
         return FALLO;
     }
     // Incrementar contador de bloques libres
     SB.cantBloquesLibres++;
     if (bwrite(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_bloque -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloque -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return nbloque;
@@ -424,8 +402,7 @@ int liberar_bloque(unsigned int nbloque) {
 int escribir_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Calcular posición del bloque e índice dentro del bloque
@@ -434,16 +411,14 @@ int escribir_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
     // Leer el bloque que contiene el inodo
     if (bread(posBloqueInodo, inodos) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Copiar el inodo en la posición correcta
     inodos[posInodo / INODOSIZE] = *inodo;
     // Escribir el bloque modificado de vuelta al dispositivo
     if (bwrite(posBloqueInodo, inodos) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> escribir_inodo() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> escribir_inodo() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     return EXITO;
@@ -464,8 +439,7 @@ int escribir_inodo(unsigned int ninodo, struct inodo *inodo) {
 int leer_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> leer_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> leer_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Calcular posición del bloque e índice dentro del bloque
@@ -474,8 +448,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo) {
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
     // Leer el bloque que contiene el inodo
     if (bread(posBloqueInodo, inodos) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> leer_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> leer_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Copiar el inodo desde la posición correcta
@@ -498,13 +471,11 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo) {
 int reservar_inodo(unsigned char tipo, unsigned char permisos) {
     struct superbloque SB;
     if (bread(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> reservar_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     if (SB.cantInodosLibres <= 0) {
-        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> SB.cantInodosLibres <= 0");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> reservar_inodo() -> SB.cantInodosLibres <= 0\n" RESET);
         return FALLO;
     }
 
@@ -531,21 +502,18 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos) {
     // Antes de escribir, apuntar al siguiente inodo libre
     struct inodo inodoLibre;
     if (leer_inodo(SB.posPrimerInodoLibre, &inodoLibre) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> leer_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> reservar_inodo() -> leer_inodo() == FALLO\n" RESET);
         return FALLO;
     }
     SB.posPrimerInodoLibre = inodoLibre.punterosDirectos[0];  // Apuntar al siguiente inodo libre
     SB.cantInodosLibres--;
     if (bwrite(posSB, &SB) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> reservar_inodo() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     // Escribir el inodo inicializado
     if (escribir_inodo(posInodoReservado, &inodoReservado) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> reservar_inodo() -> escribir_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> reservar_inodo() -> escribir_inodo() == FALLO\n" RESET);
         return FALLO;
     }
     return posInodoReservado;
@@ -580,8 +548,7 @@ int obtener_nRangoBL(struct inodo *inodo, unsigned int nblogico, unsigned int *p
         return 3;
     } else {
         *ptr = 0;
-        perror(RED "Error: ficheros_basico.c -> obtener_rangoBL() == BLOQUE LÓGICO FUERA DE RANGO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> obtener_rangoBL() == BLOQUE LÓGICO FUERA DE RANGO\n" RESET);
         return FALLO;
     }
 }
@@ -619,8 +586,7 @@ int obtener_indice(unsigned int nblogico, int nivel_punteros) {
             return ((nblogico - INDIRECTOS1) % (NPUNTEROS * NPUNTEROS)) % NPUNTEROS;
         }
     }
-    perror(RED "Error: ficheros_basico.c -> obtener_indice() -> nblogico >= INDIRECTOS2");
-    printf(RESET);
+    fprintf(stderr, RED "Error: ficheros_basico.c -> obtener_indice() -> nblogico >= INDIRECTOS2\n" RESET);
     return FALLO;
 }
 
@@ -665,8 +631,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
             // Reservar un nuevo bloque para punteros
             ptr = reservar_bloque();
             if (ptr == FALLO) {
-                perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> while (nivel_punteros > 0) -> reservar_bloque() == FALLO");
-                printf(RESET);
+                fprintf(stderr, RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> while (nivel_punteros > 0) -> reservar_bloque() == FALLO\n" RESET);
                 mi_signalSem();
                 return FALLO;
             }
@@ -708,8 +673,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
         // Reservar un nuevo bloque para datos
         ptr = reservar_bloque();
         if (ptr == FALLO) {
-            perror(RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> reservar_bloque() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: ficheros_basico.c -> traducir_bloque_inodo() -> reservar_bloque() == FALLO\n" RESET);
             mi_signalSem();
             return FALLO;
         }
@@ -757,23 +721,20 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, unsigned c
 int liberar_inodo(unsigned int ninodo) {
     struct inodo inodo;
     if (leer_inodo(ninodo, &inodo) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> leer_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> leer_inodo() == FALLO\n" RESET);
         return FALLO;
     }
     int numBloquesOcupados = inodo.numBloquesOcupados;
     // Liberar todos los bloques ocupados del inodo
     int numBloquesLiberados = liberar_bloques_inodo(0, &inodo);
     if (numBloquesLiberados == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> numBloquesLiberados == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> numBloquesLiberados == FALLO\n" RESET);
         return FALLO;
     }
     // Verificar consistencia en la liberación de bloques
     if (numBloquesLiberados != numBloquesOcupados) {
         printf("\nnumBloquesLiberados: %d, numBloquesOcupados: %d", numBloquesLiberados, numBloquesOcupados);
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> numBloquesLiberados != numBloquesOcupados");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> numBloquesLiberados != numBloquesOcupados\n" RESET);
         return FALLO;
     }
     // Actualizar los atributos del inodo para marcarlo como libre
@@ -781,8 +742,7 @@ int liberar_inodo(unsigned int ninodo) {
     inodo.tamEnBytesLog = 0;
     struct superbloque sb;
     if (bread(posSB, &sb) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> bread() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> bread() == FALLO\n" RESET);
         return FALLO;
     }
     // Enlazar el inodo liberado al inicio de la lista de inodos libres
@@ -790,15 +750,13 @@ int liberar_inodo(unsigned int ninodo) {
     sb.posPrimerInodoLibre = ninodo;
     sb.cantInodosLibres++;
     if (bwrite(posSB, &sb) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> bwrite() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> bwrite() == FALLO\n" RESET);
         return FALLO;
     }
     // Actualizar tiempo de cambio y escribir el inodo
     inodo.ctime = time(NULL);
     if (escribir_inodo(ninodo, &inodo) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> liberar_inodo() -> escribir_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_inodo() -> escribir_inodo() == FALLO\n" RESET);
         return FALLO;
     }
     return ninodo;
@@ -869,7 +827,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
             // Leer bloque de punteros solo si es necesario
             if (indice == 0 || nBL == primerBL) {
                 if (bread(ptr, bloques_punteros[nivel_punteros - 1]) == FALLO) {
-                    perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bread() == FALLO" RESET);
+                    fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bread() == FALLO\n" RESET);
                     mi_signalSem();
                     return FALLO;
                 }
@@ -884,7 +842,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
         // Si existe un bloque de datos, liberarlo
         if (ptr > 0) {
             if (liberar_bloque(ptr) == FALLO) {
-                fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO" RESET);
+                fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO\n" RESET);
                 mi_signalSem();
                 return FALLO;
             }
@@ -905,7 +863,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     // Si el bloque de punteros está vacío, liberarlo
                     if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0) {
                         if (liberar_bloque(ptr) == FALLO) {
-                            fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO" RESET);
+                            fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> liberar_bloque() == FALLO\n" RESET);
                             mi_signalSem();
                             return FALLO;
                         }
@@ -937,7 +895,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo) {
                     } else {
                         // Escribir el bloque de punteros modificado
                         if (bwrite(ptr, bloques_punteros[nivel_punteros - 1]) == FALLO) {
-                            perror(RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bwrite() == FALLO" RESET);
+                            fprintf(stderr, RED "Error: ficheros_basico.c -> liberar_bloques_inodo() -> bwrite() == FALLO\n" RESET);
                             mi_signalSem();
                             return FALLO;
                         }
@@ -1002,22 +960,19 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes) {
     mi_waitSem();
 
     if (leer_inodo(ninodo, &inodo) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> leer_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> mi_truncar_f() -> leer_inodo() == FALLO\n" RESET);
         mi_signalSem();
         return FALLO;
     }
     // Verificar permisos de escritura
     if ((inodo.permisos & 0b00000010) != 0b00000010) {
-        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.permisos & 0b00000010 != 0b00000010");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.permisos & 0b00000010 != 0b00000010\n" RESET);
         mi_signalSem();
         return FALLO;
     }
     // No se puede truncar a un tamaño mayor al actual
     if (inodo.tamEnBytesLog < nbytes) {
-        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.tamEnBytesLog > nbytes");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> mi_truncar_f() -> inodo.tamEnBytesLog > nbytes\n" RESET);
         mi_signalSem();
         return FALLO;
     }
@@ -1029,8 +984,7 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes) {
     // Liberar los bloques sobrantes
     int bloquesLiberados = liberar_bloques_inodo(primerBL, &inodo);
     if (bloquesLiberados == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> liberar_bloques_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> mi_truncar_f() -> liberar_bloques_inodo() == FALLO\n" RESET);
         mi_signalSem();
         return FALLO;
     }
@@ -1040,8 +994,7 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes) {
     inodo.ctime = currTime;
     inodo.tamEnBytesLog = nbytes;
     if (escribir_inodo(ninodo, &inodo) == FALLO) {
-        perror(RED "Error: ficheros_basico.c -> mi_truncar_f() -> escribir_inodo() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: ficheros_basico.c -> mi_truncar_f() -> escribir_inodo() == FALLO\n" RESET);
         mi_signalSem();
         return FALLO;
     }

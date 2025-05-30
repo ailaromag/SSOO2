@@ -40,6 +40,9 @@ int main(int argc, char **argv) {
     char *dispositivo = argv[1];            // Archivo del dispositivo virtual
     char *directorio_simulacion = argv[2];  // Directorio donde están los datos de simulación
 
+    // DEBUG: mostramos la dirección del directorio de simulación
+    printf("dir_sim: %s\n", directorio_simulacion);
+
     // Montar el dispositivo virtual para poder acceder al sistema de archivos
     if (bmount(dispositivo) == FALLO) {
         fprintf(stderr, RED "Error: verificacion.c -> main() -> bmount() == FALLO\n" RESET);
@@ -61,6 +64,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, RED "Error: verificacion.c -> main() -> cantidad_entradas (%d) != NUM_PROCESOS (%d)\n" RESET, cantidad_entradas, stat_directorio_simulacion.tamEnBytesLog);
         return FALLO;
     }
+
+    // DEBUG: mostrar la cantidad de entradas y la esperada
+    printf("numentradas: %d NUMPROCESOS: %d\n", cantidad_entradas, NUM_PROCESOS);
 
     // Construir la ruta completa para el archivo de informe
     char fichero_informe[TAMANO_NOMBRE_FICHERO_INFORME];
@@ -172,6 +178,8 @@ int main(int argc, char **argv) {
             memset(buffer_escrituras, 0, sizeof(buffer_escrituras)); // Limpiar buffer
             bytes_leidos = mi_read(ruta_prueba_dat, buffer_escrituras, offset_buffer_escritura, sizeof(buffer_escrituras));
         }
+        // DEBUG: mostrar la cantidad de entradas validadas en el fichero "prueba.dat"
+        printf(GRAY "[%d) %d escrituras validadas en %s]\n" RESET, i + 1, buffer_informacion[i].nEscrituras, ruta_prueba_dat);
     }
     
     // Generar el contenido del informe formateado
@@ -205,7 +213,6 @@ int main(int argc, char **argv) {
         
         // Concatenar al buffer de salida y mostrar en pantalla
         strcat(buffer_output, tmp);
-        printf("%s", tmp);
     }
 
     // Escribir el informe completo al archivo

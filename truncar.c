@@ -19,8 +19,7 @@ int main(int argc, char **argv) {
 #if DEBUGN6
     // Verificar que se proporcionan exactamente 3 argumentos
     if (argc != 4) {
-        perror(RED "Sintaxis: truncar <nombre_dispositivo> <ninodo> <nbytes>\n");
-        printf(RESET);
+        fprintf(stderr, RED "Sintaxis: truncar <nombre_dispositivo> <ninodo> <nbytes>\n" RESET);
         return FALLO;
     }
     
@@ -30,8 +29,7 @@ int main(int argc, char **argv) {
     
     // Validar que el número de inodo no sea negativo
     if (nindo < 0) {
-        perror(RED "Error: truncar.c -> main() -> nindo < 0");
-        printf(RESET);
+        fprintf(stderr, RED "Error: truncar.c -> main() -> nindo < 0\n" RESET);
         return FALLO;
     }
     
@@ -39,15 +37,13 @@ int main(int argc, char **argv) {
     
     // Validar que el número de bytes no sea negativo
     if (nbytes < 0) {
-        perror(RED "Error: truncar.c -> main() -> nbytes < 0");
-        printf(RESET);
+        fprintf(stderr, RED "Error: truncar.c -> main() -> nbytes < 0\n" RESET);
         return FALLO;
     }
     
     // Montar el dispositivo virtual para poder acceder al sistema de archivos
     if (bmount(camino) == FALLO) {
-        perror(RED "Error: truncar.c -> main() -> bmount() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: truncar.c -> main() -> bmount() == FALLO\n" RESET);
         return FALLO;
     }
     
@@ -55,23 +51,20 @@ int main(int argc, char **argv) {
     if (nbytes == 0) {
         // Si nbytes = 0, liberar completamente el inodo y todos sus bloques
         if (liberar_inodo(nindo) == FALLO){
-            perror(RED "Error: truncar.c -> main() -> liberar_inodo() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: truncar.c -> main() -> liberar_inodo() == FALLO\n" RESET);
             return FALLO;
         }
     } else {
         // Si nbytes > 0, truncar el archivo al tamaño especificado
         if (mi_truncar_f(nindo, nbytes) == FALLO) {
-            perror(RED "Error: truncar.c -> main() -> mi_truncar_f() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: truncar.c -> main() -> mi_truncar_f() == FALLO\n" RESET);
             return FALLO;
         }
     }
     
     // Desmontar el dispositivo virtual antes de terminar
     if (bumount(camino) == FALLO) {
-        perror(RED "Error: truncar.c -> main() -> bumount() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: truncar.c -> main() -> bumount() == FALLO\n" RESET);
         return FALLO;
     }
 #endif

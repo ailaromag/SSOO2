@@ -16,7 +16,7 @@
 int main(int argc, char **argv) {
     // Verificar que se proporcionan exactamente 3 argumentos
     if (argc != 4) {
-        perror(RED "Sintaxis: permitir <nombre_dispositivo> <ninodo> <permisos>\n");
+        fprintf(stderr, RED "Sintaxis: permitir <nombre_dispositivo> <ninodo> <permisos>\n" RESET);
         return FALLO;
     }
 
@@ -27,20 +27,20 @@ int main(int argc, char **argv) {
 
     // Montar el dispositivo virtual para poder acceder al sistema de archivos
     if (bmount(nombre_dispositivo) == FALLO) {
-        perror(RED "Error al montar el dispositivo\n");
+        fprintf(stderr, RED "Error al montar el dispositivo\n" RESET);
         return FALLO;
     }
 
     // Cambiar los permisos del inodo especificado
     if (mi_chmod_f(ninodo, permisos) == FALLO) {
-        perror(RED "Error al cambiar los permisos del inodo \n");
+        fprintf(stderr, RED "Error al cambiar los permisos del inodo \n" RESET);
         bumount();
         return FALLO;
     }
 
     // Desmontar el dispositivo virtual antes de terminar
     if (bumount() == FALLO) {
-        perror(RED "Error al desmontar el dispositivo\n");
+        fprintf(stderr, RED "Error al desmontar el dispositivo\n" RESET);
         return FALLO;
     }
 

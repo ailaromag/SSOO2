@@ -29,24 +29,21 @@ int main(int argc, char **argv) {
         for (int i = 0; i < num_offsets; i++) {
             fprintf(stderr, " %d", offsets[i]);
         }
-        fprintf(stderr, "\nSi diferentes_inodos=0 se reserva solo un inodo para todos los offsets\n");
-        printf(RESET);
+        fprintf(stderr, "\nSi diferentes_inodos=0 se reserva solo un inodo para todos los offsets\n" RESET);
         return FALLO;
     }
     
     // Validar el parámetro diferentes_inodos (debe ser 0 o 1)
     int diferentes_inodos = atoi(argv[3]);
     if (diferentes_inodos != 0 && diferentes_inodos != 1) {
-        perror(RED "Error: escribir.c -> main() -> diferentes_inodos != 0 && diferentes_inodos != 1");
-        printf(RESET);
+        fprintf(stderr, RED "Error: escribir.c -> main() -> diferentes_inodos != 0 && diferentes_inodos != 1\n" RESET);
         return FALLO;
     }
     
     // Montar el dispositivo virtual para poder trabajar con el sistema de archivos
     char *camino = argv[1];
     if (bmount(camino) == FALLO) {
-        perror(RED "Error: escribir.c -> main() -> bmount() == FALLO");
-        printf(RESET);
+        fprintf(stderr, RED "Error: escribir.c -> main() -> bmount() == FALLO\n" RESET);
         return FALLO;
     }
     
@@ -63,8 +60,7 @@ int main(int argc, char **argv) {
     if (diferentes_inodos == 0) {
         inodoReservado = reservar_inodo('f', 6);
         if (inodoReservado == FALLO) {
-            perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO\n" RESET);
             return FALLO;
         }
     }
@@ -75,16 +71,14 @@ int main(int argc, char **argv) {
         if (diferentes_inodos == 1) {
             inodoReservado = reservar_inodo('f', 6);
             if (inodoReservado == FALLO) {
-                perror(RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO");
-                printf(RESET);
+                fprintf(stderr, RED "Error: escribir.c -> main() -> reservar_inodo() == FALLO\n" RESET);
                 return FALLO;
             }
         }
         
         // Leer el superbloque para obtener información del sistema
         if (bread(posSB, &sb) == FALLO) {
-            perror(RED "Error: escribir.c -> main() -> bread() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: escribir.c -> main() -> bread() == FALLO\n" RESET);
             return FALLO;
         }
         
@@ -96,8 +90,7 @@ int main(int argc, char **argv) {
         // Escribir el texto en el offset especificado
         int bytes_escritos = mi_write_f(inodoReservado, texto, offsets[i], longitud);
         if (bytes_escritos == FALLO) {
-            perror(RED "Error: escribir.c -> main() -> mi_write_f() == FALLO");
-            printf(RESET);
+            fprintf(stderr, RED "Error: escribir.c -> main() -> mi_write_f() == FALLO\n" RESET);
             return FALLO;
         }
         printf("Bytes escritos: %d\n", bytes_escritos);
@@ -111,7 +104,7 @@ int main(int argc, char **argv) {
 
     // Desmontar el dispositivo al finalizar todas las operaciones
     if (bumount() == FALLO) {
-        perror(RED "Error: escribir.c -> main() -> bumount() == FALLO");
+        fprintf(stderr, RED "Error: escribir.c -> main() -> bumount() == FALLO\n" RESET);
         return FALLO;
     }
 #endif

@@ -17,7 +17,7 @@
 int main(int argc, char **argv) {
     // Verificar que se proporcionan exactamente 2 argumentos
     if (argc != 3) {
-        perror(RED "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n");
+        fprintf(stderr, RED "Sintaxis: ./leer <nombre_dispositivo> <ninodo>\n" RESET);
         return FALLO;
     }
 
@@ -27,14 +27,14 @@ int main(int argc, char **argv) {
 
     // Montar el dispositivo virtual para poder acceder al sistema de archivos
     if (bmount(nombre_dispositivo) == FALLO) {
-        perror(RED "Error al montar el dispositivo\n");
+        fprintf(stderr, RED "Error al montar el dispositivo\n" RESET);
         return FALLO;
     }
 
     // Leer los metadatos del inodo especificado para verificar que existe
     struct inodo inodo;
     if (leer_inodo(ninodo, &inodo) == FALLO) {
-        perror(RED "Error al leer el inodo \n");
+        fprintf(stderr, RED "Error al leer el inodo \n" RESET);
         bumount();
         return FALLO;
     }
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
         // Verificar que no hay errores en la lectura
         if (leidos < 0) {
-            perror(RED "Error en mi_read_f\n");
+            fprintf(stderr, RED "Error en mi_read_f\n" RESET);
             bumount();
             return FALLO;
         }
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
     // Desmontar el dispositivo virtual antes de terminar
     if (bumount() == FALLO) {
-        perror(RED "Error al desmontar el dispositivo\n");
+        fprintf(stderr, RED "Error al desmontar el dispositivo\n" RESET);
         return FALLO;
     }
 
