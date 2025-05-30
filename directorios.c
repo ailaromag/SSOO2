@@ -37,6 +37,8 @@ int extraer_camino(const char *camino, char *inicial, char *final, char *tipo) {
 }
 
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos) {
+    mi_waitSem();
+
     struct entrada entrada = {"", 0};
     struct inodo inodo_dir;
     char inicial[TAMNOMBRE];
@@ -52,10 +54,12 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         }
         *p_inodo = sb.posInodoRaiz;
         *p_entrada = 0;
+        mi_signalSem();
         return EXITO;
     }
 
     if (extraer_camino(camino_parcial, inicial, final, &tipo) == FALLO) {
+        mi_signalSem();
         return ERROR_CAMINO_INCORRECTO;
     }
 
@@ -72,6 +76,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         printf(GRAY "[buscar_entrada() -> El inodo %d no tiene permisos de lectura]\n" RESET, *p_inodo_dir);
         fflush(stdout);  // Para imprimirlo en orden
 #endif
+        mi_signalSem();
         return ERROR_PERMISO_LECTURA;
     }
 
@@ -84,6 +89,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         int bytes_leidos = mi_read_f(*p_inodo_dir, buff_entradas, 0, BLOCKSIZE);
         if (bytes_leidos == FALLO) {
             fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> mi_read_f(*p_inodo_dir, buff_entradas, 0, BLOCKSIZE) == FALLO\n" RESET);
+            mi_signalSem();
             return FALLO;
         }
         num_entradas_inodo = 0;
@@ -94,6 +100,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 bytes_leidos += mi_read_f(*p_inodo_dir, buff_entradas, bytes_leidos, BLOCKSIZE);
                 if (bytes_leidos == FALLO) {
                     fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> while ((num_entradas_inodo < cant_entradas_inodo) && (strcmp(inicial, buff_entradas[num_entradas_inodo %% (BLOCKSIZE / sizeof(struct entrada))].nombre))) -> mi_read_f(*p_inodo_dir, buff_entradas, bytes_leidos, BLOCKSIZE) == FALLO\n" RESET);
+                    mi_signalSem();
                     return FALLO;
                 }
             }
@@ -103,13 +110,16 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     if ((strcmp(inicial, entrada.nombre) != 0) && (num_entradas_inodo == cant_entradas_inodo)) {
         switch (reservar) {
         case 0:
+            mi_signalSem();    
             return ERROR_NO_EXISTE_ENTRADA_CONSULTA;
             break;
         case 1:
             if (inodo_dir.tipo == 'f') {
+                mi_signalSem();
                 return ERROR_NO_SE_PUEDE_CREAR_ENTRADA_EN_UN_FICHERO;
             }
             if ((inodo_dir.permisos & 2) != 2) {
+                mi_signalSem();
                 return ERROR_PERMISO_ESCRITURA;
             } else {
                 strcpy(entrada.nombre, inicial);
@@ -117,6 +127,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     if (strcmp(final, "/") == 0) {
                         entrada.ninodo = reservar_inodo(tipo, permisos);
                     } else {
+                        mi_signalSem();
                         return ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO;
                     }
                 } else {
@@ -129,10 +140,12 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     if (entrada.ninodo != -1) {
                         if (liberar_inodo(entrada.ninodo) == FALLO) {
                             fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> if (liberar_inodo(entrada.ninodo)) == FALLO\n" RESET);
+                            mi_signalSem();
                             return FALLO;
                         }
                     }
                     fprintf(stderr, RED "Error: directorios.c -> buscar_entrada() -> mi_write_f(*p_inodo_dir, &entrada, num_entradas_inodo * sizeof (struct entrada), sizeof (struct entrada)) == FALLO\n" RESET);
+                    mi_signalSem();
                     return FALLO;
                 }
 #if DEBUG_BUSCAR_ENTRADA
@@ -145,15 +158,20 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     if ((strcmp(final, "/") == 0) || strcmp(final, "") == 0) {
         if ((num_entradas_inodo < cant_entradas_inodo) && (reservar == 1)) {
+            mi_signalSem();
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
         *p_inodo = entrada.ninodo;
         *p_entrada = num_entradas_inodo;
+        mi_signalSem();
         return EXITO;
     } else {
         *p_inodo_dir = entrada.ninodo;
+        mi_signalSem();
         return buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos);
     }
+
+    mi_signalSem();
     return EXITO;
 }
 
@@ -187,15 +205,21 @@ void mostrar_error_buscar_entrada(int error) {
 }
 
 int mi_creat(const char *camino, unsigned char permisos) {
+    mi_waitSem();
+
     struct superbloque sb;
     if (bread(posSB, &sb) == FALLO) {
         fprintf(stderr, RED "Error: directorios.c -> mi_creat() -> bread(posSB, &sb) == FALLO" RESET);
+        mi_signalSem();
         return FALLO;
     }
     unsigned int p_inodo_dir = sb.posInodoRaiz;
     unsigned int p_inodo;
     unsigned int p_entrada;
     int error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 1, permisos);
+
+    mi_signalSem();
+
     return error;
 }
 

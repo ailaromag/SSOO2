@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     }
 
     // Empezamos la simulación
-    fprintf(stdout, RESET "*** SIMULACIÓN DE 3 PROCESOS REALIZANDO CADA UNO 10 ESCRITUAS ***\n");
+    fprintf(stdout, RESET "*** SIMULACIÓN DE %d PROCESOS REALIZANDO CADA UNO %d ESCRITURAS ***\n", NUM_PROCESOS, NUM_ESCRITURAS);
 
     // Generamos los procesos
     for (int i = 0; i < NUM_PROCESOS; i++) {
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     }
 
     // Desmontamos el dispositivo
-    if (bmount(dispositivo) == FALLO) {
+    if (bumount(dispositivo) == FALLO) {
         fprintf(stderr, RED "Error: simualcion.c -> main() -> bmount(dispositivo) == FALLO\n" RESET);
         return FALLO;
     }

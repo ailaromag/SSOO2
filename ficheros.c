@@ -206,7 +206,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     }
 
     // Comienzo sección crítica
-    mi_signalSem();
+    mi_waitSem();
 
     // Actualizar atime
     inodo.atime = time(NULL);

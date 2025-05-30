@@ -20,7 +20,7 @@ int tamMB(unsigned int nbloques) {
 int tamAI(unsigned int ninodos) {
     int tamAI = (ninodos * INODOSIZE) / BLOCKSIZE;
     if ((ninodos * INODOSIZE) % BLOCKSIZE != 0) {
-        return tamAI++;
+        tamAI++;
     }
     return tamAI;
 }
