@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
     }
 
     // Mostrar información de inicio de la simulación
-    fprintf(stdout, RESET "*** SIMULACIÓN DE %d PROCESOS REALIZANDO CADA UNO %d ESCRITURAS ***\n", NUM_PROCESOS, NUM_ESCRITURAS);
+    fprintf(stdout, "*** SIMULACIÓN DE %d PROCESOS REALIZANDO CADA UNO %d ESCRITURAS ***\n", NUM_PROCESOS, NUM_ESCRITURAS);
+    fprintf(stdout, "Directorio simulación: %s\n", directorio_simulacion);
 
     // Crear y lanzar NUM_PROCESOS procesos hijo
     for (int i = 0; i < NUM_PROCESOS; i++) {
@@ -138,7 +139,7 @@ int main(int argc, char **argv) {
 
 #if DEBUG_PROCESO
             // Debug: mostrar cuando un proceso complete todas sus escrituras
-            printf(NEGRITA "[Proceso %d: Completadas %d escrituras en %s]\n" RESET, i + 1, NUM_ESCRITURAS, fichero_proceso);
+            printf("[Proceso %d: Completadas %d escrituras en %s]\n", i + 1, NUM_ESCRITURAS, fichero_proceso);
 #endif
 
             // El proceso hijo desmonta su instancia del dispositivo antes de terminar

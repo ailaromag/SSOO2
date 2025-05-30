@@ -56,6 +56,16 @@ int main(int argc, char **argv) {
         return FALLO;
     }
 
+    // DEBUG: mostar el número de inodo
+    unsigned int p_inodo_dir;
+    unsigned int p_inodo;
+    unsigned int p_entrada;
+    if (buscar_entrada(directorio_simulacion, &p_inodo_dir, &p_inodo, &p_entrada, 0, 4) < 0) {
+        fprintf(stderr, RED "Error: verificacion.c -> main() -> buscar_entrada() < 0\n" RESET);
+        return FALLO;
+    }
+    printf("Nº de inodo: %d\n", p_inodo);
+
     // Obtener información estadística del directorio de simulación
     struct STAT stat_directorio_simulacion;
     if (mi_stat(directorio_simulacion, &stat_directorio_simulacion) == FALLO) {
