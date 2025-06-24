@@ -2,8 +2,8 @@
 
 Autores:
 - Xiaozhe Cheng
-- Aila Romanguera Mezquida
-- Alba Auilera Cabellos
+- Aila Romaguera Mezquida
+- Alba Aguilera Cabellos
 
 Mejoras hechas:
 - liberar_bloques_inods() - veriśon iterativa con mejora 1, mejora 2 no funciona del todo bien.
